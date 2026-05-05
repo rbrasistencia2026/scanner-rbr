@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Scanner QR - Asistencia</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+/* Forzar pantalla completa en tableta */
+html, body { width:100%; height:100%; }
+/* Landscape mode */
+@media (orientation: landscape) {
+  #reader { height: calc(100vh - 100px) !important; }
+}
+body { background:#0d0d0d; color:#f0f0f0; font-family:Arial,sans-serif; height:100vh; overflow:hidden; display:flex; flex-direction:column; }
+#loginScreen { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; padding:24px; background:radial-gradient(ellipse at top,#111827,#0d0d0d); }
+.logoTitle { font-size:52px; font-weight:900; color:#2979ff; letter-spacing:6px; text-align:center; line-height:1; }
+.logoSub { font-size:12px; color:#555; letter-spacing:3px; text-transform:uppercase; text-align:center; margin:8px 0 40px; }
+.loginBox { width:100%; max-width:340px; background:#1a1a1a; border:1px solid #2a2a2a; border-radius:16px; padding:28px 22px; }
+.fieldLabel { font-size:11px; color:#666; letter-spacing:1px; text-transform:uppercase; margin-bottom:6px; display:block; }
+.fieldInput { width:100%; background:#0d0d0d; border:1px solid #333; border-radius:8px; padding:14px; color:#f0f0f0; font-size:16px; margin-bottom:16px; outline:none; }
+.fieldInput:focus { border-color:#2979ff; }
+.btnLogin { width:100%; background:#2979ff; color:#fff; border:none; border-radius:8px; padding:16px; font-size:18px; font-weight:700; letter-spacing:2px; cursor:pointer; }
+.btnLogin:disabled { opacity:0.4; }
+.loginError { background:#3d0011; border:1px solid #ff1744; border-radius:8px; padding:12px; color:#ff1744; font-size:13px; text-align:center; margin-bottom:12px; display:none; }
+#scannerScreen { display:none; flex-direction:column; height:100vh; }
+.scanHeader { background:#1a1a1a; border-bottom:1px solid #2a2a2a; padding:10px 14px; display:flex; justify-content:space-between; align-items:center; flex-shrink:0; }
+.scanHeaderInst { color:#2979ff; font-weight:700; font-size:15px; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.scanHeaderUser b { display:block; color:#f0f0f0; font-size:13px; }
+.scanHeaderUser { font-size:11px; color:#555; text-align:right; }
+#reader { flex:1; width:100%; background:#000; min-height:300px; }
+.scanFooter { background:#1a1a1a; border-top:1px solid #2a2a2a; padding:10px 14px; display:flex; justify-content:space-between; align-items:center; flex-shrink:0; }
+.footerStatus { font-size:11px; color:#555; }
+.footerStatus b { display:block; font-size:13px; font-weight:600; color:#2979ff; }
+.btnIcon { background:#0d0d0d; border:1px solid #2a2a2a; border-radius:8px; padding:9px 16px; color:#f0f0f0; font-size:14px; cursor:pointer; font-weight:600; }
+.resultOverlay { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity 0.15s; background:rgba(0,0,0,0.85); z-index:999; }
+.resultOverlay.show { opacity:1; pointer-events:all; }
+.resultCard { width:min(300px,88vw); border-radius:18px; padding:28px 20px; text-align:center; border:2px solid; }
+.resultCard.puntual { background:rgba(0,50,20,0.97); border-color:#00e676; }
+.resultCard.tarde { background:rgba(50,30,0,0.97); border-color:#ff9100; }
+.resultCard.falta { background:rgba(50,0,15,0.97); border-color:#ff1744; }
+.resultCard.error { background:rgba(20,20,20,0.97); border-color:#444; }
+.resultEstado { font-size:58px; font-weight:900; letter-spacing:4px; line-height:1; margin-bottom:10px; }
+.puntual .resultEstado { color:#00e676; }
+.tarde .resultEstado { color:#ff9100; }
+.falta .resultEstado { color:#ff1744; }
+.error .resultEstado { color:#666; font-size:36px; }
+.resultId { font-size:26px; font-weight:700; color:rgba(255,255,255,0.5); margin-bottom:4px; }
+.resultHora { font-size:15px; color:rgba(255,255,255,0.5); margin-bottom:8px; }
+.resultTipo { display:inline-block; font-size:11px; padding:4px 12px; border-radius:20px; background:rgba(255,255,255,0.1); color:rgba(255,255,255,0.4); }
+.resultMsg { font-size:13px; color:rgba(255,255,255,0.6); margin-top:10px; }
+.noInternet { position:fixed; top:0; left:0; right:0; background:#ff1744; color:#fff; text-align:center; padding:10px; font-weight:700; font-size:13px; display:none; z-index:9999; }
+</style>
+</head>
+<body>
+
+<div class="noInternet" id="noInternet">SIN CONEXION</div>
+
+<div id="loginScreen">
+
+  <div style="text-align:center;margin-bottom:16px"><img src="https://res.cloudinary.com/dwcirsunu/image/upload/f_auto,q_auto/LOGO_SACHABAMBA" alt="Logo RBR" style="width:90px;height:90px;object-fit:contain;border-radius:50%;background:#fff;padding:6px;box-shadow:0 4px 16px rgba(0,0,0,0.3)"></div>
+  <div class="logoTitle" style="font-size:32px;letter-spacing:2px">ASIST QR</div>
+  <div class="logoSub">I.E.P. Ricardo Bautista Rivera - Sachabamba</div>
+  <div class="loginBox">
+    <div class="loginError" id="loginError"></div>
+    <label class="fieldLabel">Usuario</label>
+    <input class="fieldInput" type="text" id="inpUsuario" autocapitalize="none" placeholder="usuario">
+    <label class="fieldLabel">Contrasena</label>
+    <input class="fieldInput" type="password" id="inpClave" placeholder=".........">
+    <button class="btnLogin" id="btnLogin">INGRESAR</button>
+  </div>
+  <div style="margin-top:20px;text-align:center;color:rgba(255,255,255,0.4);font-size:11px;line-height:1.8">
+    <div>Desarrollado por: <b style="color:rgba(255,255,255,0.7)">Jose Carlos Huamani Quicano</b></div>
+    <div>Cel: 954 000 684</div>
+  </div>
+</div>
+
+<div id="scannerScreen">
+  <div class="scanHeader">
+    <div style="display:flex;align-items:center;gap:8px">
+      <img src="https://res.cloudinary.com/dwcirsunu/image/upload/f_auto,q_auto/LOGO_SACHABAMBA" alt="Logo RBR" style="width:36px;height:36px;object-fit:contain;border-radius:50%;background:#fff;padding:2px">
+      <div class="scanHeaderInst" id="hdrInst">ASIST QR</div>
+    </div>
+    <div class="scanHeaderUser"><b id="hdrNombre">---</b><span id="hdrRol"></span></div>
+  </div>
+  <div id="reader" style="width:100%;flex:1;min-height:300px;background:#000"></div>
+  <div class="scanFooter">
+    <div class="footerStatus">Estado<b id="ftrStatus">Iniciando...</b></div>
+    <div class="footerBtns">
+      <button class="btnIcon" id="btnRotar">ROTAR</button>
+      <button class="btnIcon" id="btnSalir">SALIR</button>
+    </div>
+  </div>
+</div>
+
+<div class="resultOverlay" id="resultOverlay">
+  <div class="resultCard" id="resultCard">
+    <div class="resultEstado" id="resEstado">---</div>
+    <div class="resultId" id="resId">ID: ---</div>
+    <div class="resultHora" id="resHora">--:--:--</div>
+    <div class="resultTipo" id="resTipo">ENTRADA</div>
+    <div class="resultMsg" id="resMsg"></div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script>
+var TOKEN = null;
+var ONLINE = navigator.onLine;
+var html5QrcodeScanner = null;
+var PROCESANDO = false;
+var ULTIMO_ID = null;
+var ULTIMO_TIME = 0;
+var TIMER_RES = null;
+
+var WEBAPP_URL = "PENDIENTE_PEGAR_URL_WEBAPP_AQUI";
+
+function playTone(f,t,d,g,dl){
+  try{
+    var c=new(window.AudioContext||window.webkitAudioContext)();
+    var o=c.createOscillator(),gn=c.createGain();
+    o.connect(gn);gn.connect(c.destination);
+    o.type=t;o.frequency.value=f;dl=dl||0;
+    gn.gain.setValueAtTime(g,c.currentTime+dl);
+    gn.gain.exponentialRampToValueAtTime(0.001,c.currentTime+dl+d);
+    o.start(c.currentTime+dl);o.stop(c.currentTime+dl+d);
+  }catch(e){}
+}
+function sndPuntual(){playTone(880,"sine",0.2,0.4);playTone(1100,"sine",0.2,0.3,0.2);}
+function sndTarde(){playTone(440,"triangle",0.3,0.5);playTone(350,"triangle",0.3,0.3,0.3);}
+function sndError(){playTone(200,"sawtooth",0.2,0.5);playTone(150,"sawtooth",0.2,0.4,0.2);}
+
+function checkNet(){
+  ONLINE=navigator.onLine;
+  document.getElementById("noInternet").style.display=ONLINE?"none":"block";
+}
+window.addEventListener("online",checkNet);
+window.addEventListener("offline",checkNet);
+setInterval(checkNet,5000);
+
+function llamarServidor(accion,datos){
+  var p=new URLSearchParams({action:accion});
+  if(datos) Object.keys(datos).forEach(function(k){p.append(k,datos[k]);});
+  return fetch(WEBAPP_URL+"?"+p.toString())
+    .then(function(r){ return r.json(); });
+}
+
+window.onload=function(){
+  checkNet();
+  document.getElementById("btnLogin").onclick=handleLogin;
+  document.getElementById("inpClave").onkeydown=function(e){if(e.key==="Enter")handleLogin();};
+  document.getElementById("btnSalir").onclick=salir;
+  document.getElementById("btnRotar").onclick=rotarPantalla;
+  var t=sessionStorage.getItem("qr_token");
+  if(t){TOKEN=t;abrirScanner({nombre:sessionStorage.getItem("qr_nombre")||"",rol:sessionStorage.getItem("qr_rol")||"",institucion:sessionStorage.getItem("qr_inst")||""});}
+};
+
+function handleLogin(){
+  if(!ONLINE){mostrarError("Sin conexion");return;}
+  var u=document.getElementById("inpUsuario").value.trim();
+  var p=document.getElementById("inpClave").value.trim();
+  if(!u||!p){mostrarError("Ingresa usuario y contrasena");return;}
+  var btn=document.getElementById("btnLogin");
+  btn.disabled=true;btn.textContent="VERIFICANDO...";
+  llamarServidor("login",{usuario:u,clave:p})
+    .then(function(res){
+      btn.disabled=false;btn.textContent="INGRESAR";
+      if(!res.ok){mostrarError(res.mensaje||"Error");sndError();return;}
+      TOKEN=res.token;
+      sessionStorage.setItem("qr_token", res.token);
+      sessionStorage.setItem("qr_usuario", document.getElementById("inpUsuario").value.trim());
+      sessionStorage.setItem("qr_clave", document.getElementById("inpClave").value.trim());
+      sessionStorage.setItem("qr_nombre", res.nombre||"");
+      sessionStorage.setItem("qr_rol", res.rol||"");
+      sessionStorage.setItem("qr_inst", res.institucion||"");
+      abrirScanner(res);
+    })
+    .catch(function(){btn.disabled=false;btn.textContent="INGRESAR";mostrarError("Error de conexion");sndError();});
+}
+
+function mostrarError(msg){
+  var el=document.getElementById("loginError");
+  el.textContent=msg;el.style.display="block";
+}
+
+function abrirScanner(datos){
+  document.getElementById("loginScreen").style.display="none";
+  document.getElementById("scannerScreen").style.display="flex";
+  document.getElementById("hdrInst").textContent=datos.institucion||"ASIST QR";
+  document.getElementById("hdrNombre").textContent=datos.nombre||"";
+  document.getElementById("hdrRol").textContent=datos.rol||"";
+  iniciarScanner();
+}
+
+function iniciarScanner(){
+  var st = document.getElementById("ftrStatus");
+  st.textContent = "Iniciando camara...";
+
+  // Dar tiempo al DOM para renderizar el div antes de iniciar
+  setTimeout(function() {
+    html5QrcodeScanner = new Html5Qrcode("reader");
+    Html5Qrcode.getCameras()
+      .then(function(cameras) {
+        if (!cameras || cameras.length === 0) {
+          st.textContent = "No se encontro camara";
+          return;
+        }
+        var camId = cameras[0].id;
+        return html5QrcodeScanner.start(
+          camId,
+          {
+            fps: 25,
+            qrbox: function(w,h){
+              return {width:Math.floor(w*0.85), height:Math.floor(h*0.85)};
+            },
+            experimentalFeatures: { useBarCodeDetectorIfSupported: true }
+          },
+          function(txt){ onQRDetected(txt); },
+          function(){}
+        );
+      })
+      .then(function(){ st.textContent = "Escaneando..."; })
+      .catch(function(err){ st.textContent = "Error: " + err; });
+  }, 500);
+}
+
+// Calcular estado segun hora local (sin llamar al servidor)
+function calcularEstadoLocal() {
+  var ahora = new Date();
+  var h = ahora.getHours();
+  var m = ahora.getMinutes();
+  var totalMin = h * 60 + m;
+  
+  // Horarios RBR (deben coincidir con CONFIG del Sheets)
+  var puntuaDesde = 7 * 60 + 30;   // 07:30 - sistema abre
+  var puntualHasta = 8 * 60 + 10;  // 08:10 - puntual hasta
+  var tardeHasta = 11 * 60 + 15;   // 11:15 - tarde hasta (desde 11:16 = FALTA)
+
+  if (totalMin < puntuaDesde) return "FUERA_HORARIO";
+  if (totalMin >= tardeHasta) return "FUERA_HORARIO";
+  if (totalMin <= puntualHasta) return "PUNTUAL";
+  return "TARDE";
+}
+
+function horaActualStr() {
+  var d = new Date();
+  var h = String(d.getHours()).padStart(2,'0');
+  var m = String(d.getMinutes()).padStart(2,'0');
+  var s = String(d.getSeconds()).padStart(2,'0');
+  return h+":"+m+":"+s;
+}
+
+function onQRDetected(texto){
+  if(PROCESANDO) return;
+  var now = Date.now();
+  if(texto===ULTIMO_ID && now-ULTIMO_TIME<3000) return;
+  ULTIMO_ID = texto;
+  ULTIMO_TIME = now;
+  PROCESANDO = true;
+
+  // Eliminar ceros a la izquierda (ej: 0001 → 1, 0124 → 124)
+  texto = String(parseInt(texto, 10) || texto).trim();
+
+  // 1. Calcular estado LOCALMENTE - inmediato
+  var estadoLocal = calcularEstadoLocal();
+  var horaLocal = horaActualStr();
+
+  if(!ONLINE) {
+    mostrarResultado({ok:false, tipo:"ERROR", mensaje:"Sin conexion"}, texto);
+    sndError();
+    PROCESANDO = false;
+    return;
+  }
+
+  if(estadoLocal === "FUERA_HORARIO") {
+    mostrarResultado({ok:false, tipo:"FUERA_HORARIO", mensaje:"Fuera del horario escolar"}, texto);
+    sndError();
+    return;
+  }
+
+  // 2. Mostrar resultado INMEDIATAMENTE sin esperar servidor
+  mostrarResultado({
+    ok: true,
+    id: texto.trim(),
+    estado: estadoLocal,
+    hora: horaLocal,
+    tipo: "ENTRADA"
+  }, texto);
+
+  // Sonido inmediato
+  if(estadoLocal==="PUNTUAL") sndPuntual();
+  else sndTarde();
+
+  // 3. Enviar al servidor EN SEGUNDO PLANO (no bloquea)
+  enviarAlServidor(texto.trim(), horaLocal);
+}
+
+function enviarAlServidor(id, hora) {
+  console.log("Enviando al servidor ID:", id, "TOKEN:", TOKEN ? "OK" : "VACIO");
+  llamarServidor("escanear", {token: TOKEN, id: id})
+    .then(function(res) {
+      console.log("Respuesta servidor:", JSON.stringify(res));
+      if (!res.ok && res.mensaje && res.mensaje.indexOf("Sesion") >= 0) {
+        var u = sessionStorage.getItem("qr_usuario");
+        var p = sessionStorage.getItem("qr_clave");
+        console.log("Re-login con usuario:", u);
+        return llamarServidor("login", {usuario: u, clave: p})
+          .then(function(lr) {
+            console.log("Re-login resultado:", lr.ok);
+            if (!lr.ok) return;
+            TOKEN = lr.token;
+            sessionStorage.setItem("qr_token", lr.token);
+            return llamarServidor("escanear", {token: TOKEN, id: id});
+          });
+      }
+    })
+    .catch(function(err) {
+      console.log("Error guardando en servidor:", err.message);
+    });
+}
+
+function mostrarResultado(res,id){
+  var overlay=document.getElementById("resultOverlay");
+  var card=document.getElementById("resultCard");
+  card.className="resultCard";
+  if(res.ok){
+    var e=(res.estado||"").toUpperCase();
+    document.getElementById("resEstado").textContent=e;
+    document.getElementById("resId").textContent="ID: "+(res.id||id);
+    document.getElementById("resHora").textContent=res.hora||hora();
+    document.getElementById("resTipo").textContent=res.tipo||"ENTRADA";
+    document.getElementById("resMsg").textContent=res.duplicado?"Registro duplicado":"";
+    card.classList.add(e==="PUNTUAL"?"puntual":e==="TARDE"?"tarde":"falta");
+  } else {
+    var tipoError = (res.tipo === "FUERA_HORARIO") ? "FUERA DE HORARIO" : "ERROR";
+    document.getElementById("resEstado").textContent = tipoError;
+    document.getElementById("resId").textContent = "ID: "+(id||"---");
+    document.getElementById("resHora").textContent = hora();
+    document.getElementById("resTipo").textContent = res.tipo||"ERROR";
+    document.getElementById("resMsg").textContent = res.mensaje||"Error";
+    card.classList.add("error");
+  }
+  overlay.classList.add("show");
+  clearTimeout(TIMER_RES);
+  TIMER_RES=setTimeout(function(){
+    overlay.classList.remove("show");
+    PROCESANDO=false;
+    ULTIMO_ID=null;
+    document.getElementById("ftrStatus").textContent="Escaneando...";
+  },2500);
+}
+
+function hora(){return new Date().toLocaleTimeString("es-PE",{hour12:false});}
+
+function rotarPantalla(){
+  var body = document.body;
+  var current = body.style.transform;
+  if(current === "rotate(90deg) translateY(-100%)") {
+    body.style.transform = "";
+    body.style.transformOrigin = "";
+    body.style.width = "";
+    body.style.height = "";
+    body.style.position = "";
+  } else {
+    body.style.transform = "rotate(90deg) translateY(-100%)";
+    body.style.transformOrigin = "top left";
+    body.style.width = "100vh";
+    body.style.height = "100vw";
+    body.style.position = "absolute";
+  }
+}
+
+function salir(){
+  if(!confirm("Cerrar sesion?")) return;
+  sessionStorage.clear();TOKEN=null;
+  if(html5QrcodeScanner) { try { html5QrcodeScanner.stop(); } catch(e){} html5QrcodeScanner = null; }
+  document.getElementById("scannerScreen").style.display="none";
+  document.getElementById("loginScreen").style.display="flex";
+  document.getElementById("inpUsuario").value="";
+  document.getElementById("inpClave").value="";
+  document.getElementById("loginError").style.display="none";
+}
+</script>
+</body>
+</html>
