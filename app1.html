@@ -1,0 +1,1319 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel de Gestión - Asistencia</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#f0f2f5; font-family:Arial,sans-serif; min-height:100vh; }
+
+/* LOGIN */
+#loginScreen { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; padding:24px; background:linear-gradient(135deg,#1a237e,#0d47a1); }
+.loginLogo { font-size:42px; font-weight:900; color:#fff; letter-spacing:4px; text-align:center; margin-bottom:8px; }
+.loginSub { color:rgba(255,255,255,0.6); font-size:12px; letter-spacing:2px; text-transform:uppercase; text-align:center; margin-bottom:32px; }
+.loginBox { width:100%; max-width:380px; background:#fff; border-radius:16px; padding:32px 28px; box-shadow:0 20px 60px rgba(0,0,0,0.3); }
+.loginTitle { font-size:20px; font-weight:700; color:#1a237e; margin-bottom:24px; text-align:center; }
+.fieldLabel { font-size:12px; color:#666; font-weight:600; margin-bottom:6px; display:block; text-transform:uppercase; letter-spacing:1px; }
+.fieldInput { width:100%; border:2px solid #e0e0e0; border-radius:8px; padding:12px 14px; font-size:15px; outline:none; transition:border-color .2s; margin-bottom:16px; }
+.fieldInput:focus { border-color:#1a237e; }
+.btnPrimary { width:100%; background:#1a237e; color:#fff; border:none; border-radius:8px; padding:14px; font-size:16px; font-weight:700; cursor:pointer; letter-spacing:1px; }
+.btnPrimary:disabled { opacity:0.5; }
+.loginError { background:#ffebee; border:1px solid #ef9a9a; border-radius:8px; padding:10px 14px; color:#c62828; font-size:13px; margin-bottom:16px; display:none; }
+
+/* HEADER */
+#appScreen { display:none; flex-direction:column; min-height:100vh; }
+.appHeader { background:#1a237e; color:#fff; padding:0 20px; height:60px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; box-shadow:0 2px 8px rgba(0,0,0,0.2); }
+.headerInst { font-size:15px; font-weight:700; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.headerUser { font-size:12px; color:rgba(255,255,255,0.7); text-align:right; }
+.headerUser b { display:block; color:#fff; font-size:13px; }
+.btnSalir { background:rgba(255,255,255,0.15); border:none; color:#fff; padding:6px 14px; border-radius:6px; cursor:pointer; font-size:13px; }
+
+/* NAV */
+.appNav { background:#fff; border-bottom:1px solid #e0e0e0; display:flex; overflow-x:auto; padding:0 12px; }
+.navBtn { padding:14px 18px; border:none; background:none; font-size:13px; font-weight:600; color:#666; cursor:pointer; white-space:nowrap; border-bottom:3px solid transparent; transition:all .2s; }
+.navBtn.active { color:#1a237e; border-bottom-color:#1a237e; }
+
+/* CONTENT */
+.appContent { flex:1; padding:20px; max-width:1200px; margin:0 auto; width:100%; }
+
+/* CARDS */
+.card { background:#fff; border-radius:12px; padding:20px; margin-bottom:16px; box-shadow:0 2px 8px rgba(0,0,0,0.06); }
+.cardTitle { font-size:16px; font-weight:700; color:#1a237e; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
+
+/* FILTROS */
+.filtros { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px; }
+.selectField { border:2px solid #e0e0e0; border-radius:8px; padding:8px 12px; font-size:14px; outline:none; background:#fff; cursor:pointer; }
+.selectField:focus { border-color:#1a237e; }
+.btnBuscar { background:#1a237e; color:#fff; border:none; border-radius:8px; padding:9px 20px; font-size:14px; font-weight:600; cursor:pointer; }
+.btnSecundario { background:#f5f5f5; color:#333; border:1px solid #ddd; border-radius:8px; padding:9px 16px; font-size:14px; cursor:pointer; }
+
+/* TABLA */
+.tablaWrap { overflow-x:auto; }
+table { width:100%; border-collapse:collapse; font-size:13px; }
+th { background:#f5f7ff; color:#1a237e; font-weight:700; padding:10px 12px; text-align:left; border-bottom:2px solid #e0e0e0; white-space:nowrap; }
+td { padding:10px 12px; border-bottom:1px solid #f0f0f0; }
+tr:hover td { background:#f9f9ff; }
+
+/* ESTADOS */
+.badge { display:inline-block; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700; letter-spacing:1px; }
+.badge-puntual { background:#e8f5e9; color:#2e7d32; }
+.badge-tarde { background:#fff3e0; color:#e65100; }
+.badge-falta { background:#ffebee; color:#c62828; }
+.badge-justificado { background:#e3f2fd; color:#1565c0; }
+.badge-fuera { background:#f3e5f5; color:#6a1b9a; }
+
+/* STATS */
+.statsGrid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:20px; }
+.statCard { background:#fff; border-radius:10px; padding:16px; text-align:center; box-shadow:0 2px 8px rgba(0,0,0,0.06); border-left:4px solid; }
+.statCard.verde { border-color:#4caf50; }
+.statCard.naranja { border-color:#ff9800; }
+.statCard.rojo { border-color:#f44336; }
+.statCard.azul { border-color:#2196f3; }
+.statCard.gris { border-color:#9e9e9e; }
+.statNum { font-size:32px; font-weight:900; color:#333; }
+.statLabel { font-size:12px; color:#666; margin-top:4px; text-transform:uppercase; letter-spacing:1px; }
+
+/* FICHA ESTUDIANTE */
+.fichaGrid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.fichaItem label { font-size:11px; color:#666; text-transform:uppercase; letter-spacing:1px; display:block; margin-bottom:4px; }
+.fichaItem span { font-size:14px; font-weight:600; color:#333; }
+
+/* JUSTIFICACION FORM */
+.formGroup { margin-bottom:14px; }
+.formGroup label { font-size:12px; color:#666; font-weight:600; display:block; margin-bottom:6px; text-transform:uppercase; }
+.formGroup input, .formGroup select, .formGroup textarea { width:100%; border:2px solid #e0e0e0; border-radius:8px; padding:10px 12px; font-size:14px; outline:none; font-family:Arial,sans-serif; }
+.formGroup input:focus, .formGroup select:focus, .formGroup textarea:focus { border-color:#1a237e; }
+
+/* LOADING */
+.loading { text-align:center; padding:40px; color:#666; }
+.spinner { display:inline-block; width:30px; height:30px; border:3px solid #e0e0e0; border-top-color:#1a237e; border-radius:50%; animation:spin .7s linear infinite; margin-bottom:12px; }
+@keyframes spin { to{transform:rotate(360deg)} }
+
+/* ALERT */
+.alert { padding:12px 16px; border-radius:8px; margin-bottom:16px; font-size:14px; }
+.alert-success { background:#e8f5e9; color:#2e7d32; border:1px solid #a5d6a7; }
+.alert-error { background:#ffebee; color:#c62828; border:1px solid #ef9a9a; }
+.alert-info { background:#e3f2fd; color:#1565c0; border:1px solid #90caf9; }
+
+/* REPORTE MENSUAL */
+.repTable { border-collapse:collapse; font-size:12px; min-width:100%; }
+.repTable th { background:#1a237e; color:#fff; padding:6px 8px; text-align:center; white-space:nowrap; position:sticky; top:0; }
+.repTable th.th-nombre { text-align:left; min-width:180px; }
+.repTable td { padding:5px 6px; border:1px solid #e0e0e0; text-align:center; white-space:nowrap; }
+.repTable td.td-nombre { text-align:left; font-weight:600; }
+.repTable tr:hover td { background:#f5f7ff !important; }
+.cel-P { background:#e8f5e9; color:#2e7d32; font-weight:700; }
+.cel-T { background:#fff3e0; color:#e65100; font-weight:700; }
+.cel-F { background:#ffebee; color:#c62828; font-weight:700; }
+.cel-J { background:#e3f2fd; color:#1565c0; font-weight:700; }
+.cel-vacio { background:#f5f5f5; color:#999; }
+.rep-seccion-title { background:#e8eaf6; color:#1a237e; font-weight:700; padding:10px; margin:16px 0 8px; border-radius:8px; font-size:14px; }
+.rep-totales td { background:#f5f7ff; font-weight:700; }
+
+/* RESPONSIVE */
+@media(max-width:600px) {
+  .fichaGrid { grid-template-columns:1fr; }
+  .filtros { flex-direction:column; }
+  .appContent { padding:12px; }
+}
+</style>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+
+  <div style="text-align:center;margin-bottom:16px">
+    <img src="https://res.cloudinary.com/dwcirsunu/image/upload/f_auto,q_auto/LOGO_SACHABAMBA" alt="Logo RBR" style="width:100px;height:100px;object-fit:contain;border-radius:50%;background:#fff;padding:8px;box-shadow:0 4px 20px rgba(0,0,0,0.4)">
+  </div>
+  <div class="loginLogo" style="font-size:28px;letter-spacing:2px">SISTEMA DE ASISTENCIA</div>
+  <div class="loginSub">I.E.P. Ricardo Bautista Rivera - Sachabamba</div>
+  <div class="loginBox">
+    <div class="loginTitle">Iniciar Sesion</div>
+    <div class="loginError" id="loginError"></div>
+    <label class="fieldLabel">Usuario</label>
+    <input class="fieldInput" type="text" id="inpUsuario" autocapitalize="none" placeholder="usuario">
+    <label class="fieldLabel">Contrasena</label>
+    <input class="fieldInput" type="password" id="inpClave" placeholder=".........">
+    <button class="btnPrimary" id="btnLogin">INGRESAR</button>
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid #eee;text-align:center;color:#999;font-size:11px;line-height:1.8">
+      <div>Desarrollado por:</div>
+      <div style="color:#1a237e;font-weight:700">Jose Carlos Huamani Quicano</div>
+      <div>Cel: 954 000 684</div>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="appScreen">
+  <!-- Header -->
+  <div class="appHeader">
+    <div style="display:flex;align-items:center;gap:10px">
+      <img src="https://res.cloudinary.com/dwcirsunu/image/upload/f_auto,q_auto/LOGO_SACHABAMBA" alt="Logo RBR" style="width:38px;height:38px;object-fit:contain;border-radius:50%;background:#fff;padding:2px">
+      <div class="headerInst" id="hdrInst">RBR</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px">
+      <div class="headerUser"><b id="hdrNombre">---</b><span id="hdrRol"></span></div>
+      <button class="btnSalir" onclick="salir()">Salir</button>
+    </div>
+  </div>
+
+  <!-- Nav -->
+  <div class="appNav">
+    <button class="navBtn active" onclick="mostrarModulo('asistencia',this)">📋 Asistencia</button>
+    <button class="navBtn" onclick="mostrarModulo('justificaciones',this)">✏️ Justificaciones</button>
+    <button class="navBtn" onclick="mostrarModulo('estudiante',this)">👤 Estudiante</button>
+    <button class="navBtn" onclick="mostrarModulo('reportes',this)">📊 Reportes</button>
+    <button class="navBtn" onclick="mostrarModulo('estadisticas',this)">📈 Estadisticas</button>
+  </div>
+
+  <!-- Content -->
+  <div class="appContent">
+
+    <!-- MODULO 1: ASISTENCIA -->
+    <div id="mod-asistencia">
+      <div class="card">
+        <div class="cardTitle">📋 Registro de Asistencia</div>
+        
+        <!-- Pestañas -->
+        <div style="display:flex;gap:0;margin-bottom:16px;border-bottom:2px solid #e0e0e0">
+          <button id="tabAula" onclick="cambiarTabAsist('aula')" 
+            style="padding:10px 20px;border:none;background:#1a237e;color:#fff;font-weight:700;cursor:pointer;border-radius:8px 8px 0 0;font-size:13px">
+            🏫 Por Aula
+          </button>
+          <button id="tabEst" onclick="cambiarTabAsist('estudiante')"
+            style="padding:10px 20px;border:none;background:#e0e0e0;color:#666;font-weight:700;cursor:pointer;border-radius:8px 8px 0 0;font-size:13px;margin-left:4px">
+            👤 Por Estudiante
+          </button>
+        </div>
+
+        <!-- TAB 1: POR AULA -->
+        <div id="tabContenidoAula">
+          <div class="filtros">
+            <select class="selectField" id="filtGrado">
+              <option value="">-- Grado --</option>
+              <option>PRIMERO</option><option>SEGUNDO</option><option>TERCERO</option>
+              <option>CUARTO</option><option>QUINTO</option>
+            </select>
+            <select class="selectField" id="filtSeccion">
+              <option value="">-- Seccion --</option>
+              <option>A</option>
+            </select>
+            <button class="btnBuscar" onclick="cargarAsistencia()">🔍 Ver</button>
+          </div>
+          <div id="statsAsistencia" class="statsGrid" style="display:none"></div>
+          <div id="tablaAsistencia" class="tablaWrap"></div>
+        </div>
+
+        <!-- TAB 2: POR ESTUDIANTE -->
+        <div id="tabContenidoEst" style="display:none">
+          <!-- Buscar por ID - solo Admin y SuperAdmin -->
+          <div id="asistBuscarId" style="display:none;margin-bottom:12px">
+            <div class="filtros">
+              <input type="number" class="selectField" id="asistId" placeholder="ID del estudiante">
+              <button class="btnBuscar" onclick="buscarAsistenciaEstudiante()">🔍 Buscar</button>
+            </div>
+          </div>
+          <!-- Buscar por QR -->
+          <div id="asistBuscarQR">
+            <div style="margin-bottom:8px;display:flex;gap:8px;align-items:center">
+              <button class="btnBuscar" onclick="activarQRAsistEst()" id="btnActivarQRAsist">📷 Activar Camara QR</button>
+            </div>
+            <div id="qrReaderAsistEst" style="width:100%;max-width:500px;min-height:0;background:#111;border-radius:8px;margin:0 auto;display:none"></div>
+          </div>
+          <div id="fichaAsistEstudiante" style="margin-top:16px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODULO 2: JUSTIFICACIONES -->
+    <div id="mod-justificaciones" style="display:none">
+      <div class="card">
+        <div class="cardTitle">✏️ Registrar Justificacion</div>
+        <div class="formGroup">
+          <label>Buscar Estudiante</label>
+          <!-- Por ID - solo Admin y SuperAdmin -->
+          <div id="justifBuscarId" style="display:none;margin-bottom:8px">
+            <div style="display:flex;gap:8px">
+              <input type="number" id="justifId" placeholder="Ingresa el ID" style="flex:1;border:2px solid #e0e0e0;border-radius:8px;padding:10px 12px;font-size:14px;outline:none">
+              <button class="btnBuscar" onclick="buscarEstudianteJustif()">Buscar</button>
+            </div>
+          </div>
+          <!-- Por QR - todos -->
+          <div id="justifBuscarQR">
+            <div class="alert alert-info">Escanea el QR del estudiante</div>
+            <div id="qrReaderJustif" style="width:100%;max-width:500px;min-height:300px;margin:8px auto 0;background:#000;border-radius:8px"></div>
+          </div>
+        </div>
+        <div id="justifEstudiante" style="display:none">
+          <div class="alert alert-info" id="justifNombre"></div>
+          <div class="formGroup">
+            <label>Fecha de la Falta/Tardanza</label>
+            <input type="date" id="justifFecha">
+          </div>
+          <div class="formGroup">
+            <label>Tipo</label>
+            <select id="justifTipo">
+              <option value="FALTA">Falta</option>
+              <option value="TARDANZA">Tardanza</option>
+            </select>
+          </div>
+          <div class="formGroup">
+            <label>Motivo</label>
+            <textarea id="justifMotivo" rows="3" placeholder="Describe el motivo de la justificacion..."></textarea>
+          </div>
+          <button class="btnPrimary" onclick="registrarJustificacion()" style="max-width:200px">Guardar</button>
+        </div>
+        <div id="justifMsg"></div>
+      </div>
+      <div class="card">
+        <div class="cardTitle">📋 Historial de Justificaciones</div>
+        <div class="filtros">
+          <select class="selectField" id="filtJustifGrado">
+            <option value="">-- Grado --</option>
+            <option>PRIMERO</option><option>SEGUNDO</option><option>TERCERO</option>
+            <option>CUARTO</option><option>QUINTO</option>
+          </select>
+          <select class="selectField" id="filtJustifSeccion">
+            <option value="">-- Seccion --</option>
+            <option>A</option>
+          </select>
+          <button class="btnBuscar" onclick="cargarJustificaciones()">🔍 Ver</button>
+        </div>
+        <div id="tablaJustificaciones" class="tablaWrap"></div>
+      </div>
+    </div>
+
+    <!-- MODULO 3: ESTUDIANTE -->
+    <div id="mod-estudiante" style="display:none">
+      <div class="card">
+        <div class="cardTitle">👤 Datos del Estudiante</div>
+        <!-- Busqueda por ID - solo Admin y SuperAdmin -->
+        <div id="buscarPorId" style="display:none">
+          <div class="filtros">
+            <input type="number" class="selectField" id="buscarId" placeholder="ID del estudiante">
+            <button class="btnBuscar" onclick="buscarEstudiante()">🔍 Buscar por ID</button>
+          </div>
+        </div>
+        <!-- Busqueda por QR - todos los roles -->
+        <div id="buscarPorQR">
+          <div class="alert alert-info" style="margin-bottom:12px">
+            Escanea el QR del estudiante para ver sus datos
+          </div>
+          <div id="qrReaderEstudiante" style="width:100%;max-width:500px;min-height:300px;margin:0 auto;background:#000;border-radius:8px"></div>
+        </div>
+        <div id="fichaEstudiante"></div>
+      </div>
+    </div>
+
+    <!-- MODULO 4: REPORTES -->
+    <div id="mod-reportes" style="display:none">
+      <!-- REPORTE MENSUAL POR GRADO -->
+      <div class="card">
+        <div class="cardTitle">📅 Registro de Asistencia Mensual</div>
+        <div class="filtros">
+          <select class="selectField" id="repGrado">
+            <option value="">-- Grado --</option>
+            <option>PRIMERO</option><option>SEGUNDO</option><option>TERCERO</option>
+            <option>CUARTO</option><option>QUINTO</option>
+          </select>
+          <input type="month" class="selectField" id="repMes">
+          <button class="btnBuscar" onclick="generarReporteMensual()">📊 Ver Registro</button>
+        </div>
+        <div id="repMensual" style="overflow-x:auto"></div>
+        <div id="repBotones" style="display:none;margin-top:12px;gap:8px;display:flex">
+          <button class="btnSecundario" onclick="imprimirReporte()">🖨️ Imprimir PDF</button>
+          <button class="btnSecundario" onclick="descargarExcel()">📥 Descargar Excel</button>
+        </div>
+      </div>
+      <!-- REPORTE INDIVIDUAL -->
+      <div class="card">
+        <div class="cardTitle">👤 Reporte Individual</div>
+        <div class="filtros">
+          <input type="number" class="selectField" id="repId" placeholder="ID estudiante">
+          <input type="date" class="selectField" id="repDesde">
+          <input type="date" class="selectField" id="repHasta">
+          <button class="btnBuscar" onclick="generarReporteIndividual()">📄 Ver Reporte</button>
+          <button class="btnSecundario" onclick="imprimirReporte()">🖨️ Imprimir</button>
+        </div>
+        <div id="repIndividual"></div>
+      </div>
+    </div>
+
+    <!-- MODULO 5: ESTADISTICAS -->
+    <div id="mod-estadisticas" style="display:none">
+      <div class="card">
+        <div class="cardTitle">📈 Estadísticas Generales</div>
+        <div class="filtros">
+          <select class="selectField" id="statGrado">
+            <option value="">-- Todos los Grados --</option>
+            <option>PRIMERO</option><option>SEGUNDO</option><option>TERCERO</option>
+            <option>CUARTO</option><option>QUINTO</option>
+          </select>
+          <select class="selectField" id="statSeccion">
+            <option value="">-- Todas las Secciones --</option>
+            <option>A</option>
+          </select>
+          <button class="btnBuscar" onclick="cargarEstadisticas()">🔍 Ver</button>
+        </div>
+        <div id="statsGenerales"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+var SESSION = null;
+var qrEst = null;
+var qrJustif_ = null;
+var qrAsist = null;
+var qrAsistActivo = false;
+var WEBAPP_URL = "PENDIENTE_PEGAR_URL_WEBAPP_AQUI";
+var ESTUDIANTE_JUSTIF = null;
+
+// Servidor
+function api(accion, datos) {
+  var p = new URLSearchParams({action: accion});
+  if (datos) Object.keys(datos).forEach(function(k){ p.append(k, datos[k]); });
+  return fetch(WEBAPP_URL + "?" + p.toString())
+    .then(function(r){ return r.json(); });
+}
+
+function apiConToken(accion, datos) {
+  var d = Object.assign({token: SESSION.token}, datos||{});
+  return api(accion, d);
+}
+
+// Init
+window.onload = function() {
+  var hoy = new Date().toISOString().split('T')[0];
+  document.getElementById('repDesde').value = hoy;
+  document.getElementById('repHasta').value = hoy;
+  document.getElementById('repMes').value = hoy.substring(0,7);
+  document.getElementById('btnLogin').onclick = handleLogin;
+  document.getElementById('inpClave').onkeydown = function(e){ if(e.key==='Enter') handleLogin(); };
+};
+
+// Login
+function handleLogin() {
+  var u = document.getElementById('inpUsuario').value.trim();
+  var p = document.getElementById('inpClave').value.trim();
+  if (!u || !p) { mostrarLoginError('Ingresa usuario y contrasena'); return; }
+  var btn = document.getElementById('btnLogin');
+  btn.disabled = true; btn.textContent = 'VERIFICANDO...';
+  api('login', {usuario: u, clave: p})
+    .then(function(res) {
+      btn.disabled = false; btn.textContent = 'INGRESAR';
+      if (!res.ok) { mostrarLoginError(res.mensaje || 'Error'); return; }
+      SESSION = res;
+      SESSION.usuario = u;
+      SESSION.clave = p;
+      iniciarApp();
+    })
+    .catch(function(){ btn.disabled=false; btn.textContent='INGRESAR'; mostrarLoginError('Error de conexion'); });
+}
+
+function mostrarLoginError(msg) {
+  var el = document.getElementById('loginError');
+  el.textContent = msg; el.style.display = 'block';
+}
+
+function iniciarApp() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('appScreen').style.display = 'flex';
+  document.getElementById('hdrInst').textContent = SESSION.institucion || 'NSM';
+  document.getElementById('hdrNombre').textContent = SESSION.nombre || '';
+  document.getElementById('hdrRol').textContent = SESSION.rol || '';
+  aplicarPermisosPorRol();
+  cargarEstadisticas();
+}
+
+function aplicarPermisosPorRol() {
+  var rol = SESSION.rol;
+  // Solo admin y superadmin pueden buscar por ID
+  if (['SUPER_ADMIN','ADMINISTRADOR'].includes(rol)) {
+    var buscarId = document.getElementById('buscarPorId');
+    if (buscarId) buscarId.style.display = 'block';
+    var justifId = document.getElementById('justifBuscarId');
+    if (justifId) justifId.style.display = 'block';
+    var asistId = document.getElementById('asistBuscarId');
+    if (asistId) asistId.style.display = 'block';
+  }
+  // Solo admin, superadmin y auxiliar pueden justificar
+  if (!['SUPER_ADMIN','ADMINISTRADOR','AUXILIAR'].includes(rol)) {
+    var btnJustif = document.querySelector('[onclick*="justificaciones"]');
+    if (btnJustif) btnJustif.style.display = 'none';
+  }
+}
+
+// Modulos
+function mostrarModulo(nombre, btn) {
+  ['asistencia','justificaciones','estudiante','reportes','estadisticas'].forEach(function(m){
+    document.getElementById('mod-'+m).style.display = m===nombre ? 'block' : 'none';
+  });
+  document.querySelectorAll('.navBtn').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+  if (nombre === 'estadisticas') cargarEstadisticas();
+  // Iniciar QR segun modulo
+  if (nombre === 'estudiante') {
+    setTimeout(function(){ pararQRs(); iniciarQREstudiante(); }, 300);
+  } else if (nombre === 'justificaciones') {
+    setTimeout(function(){ pararQRs(); iniciarQRJustif(); }, 300);
+  } else if (nombre === 'asistencia') {
+    pararQRs(); // solo detener, no iniciar automaticamente
+  } else {
+    pararQRs();
+  }
+}
+
+function cambiarTabAsist(tab) {
+  var btnAula = document.getElementById('tabAula');
+  var btnEst = document.getElementById('tabEst');
+  var contAula = document.getElementById('tabContenidoAula');
+  var contEst = document.getElementById('tabContenidoEst');
+
+  if (tab === 'aula') {
+    // Detener camara si estaba activa
+    if (qrAsist) { try{qrAsist.stop();}catch(e){} qrAsist=null; }
+    var div = document.getElementById('qrReaderAsistEst');
+    if (div) { div.style.display='none'; div.style.minHeight='0'; }
+    var btn = document.getElementById('btnActivarQRAsist');
+    if (btn) btn.textContent = '📷 Activar Camara QR';
+
+    btnAula.style.background = '#1a237e';
+    btnAula.style.color = '#fff';
+    btnEst.style.background = '#e0e0e0';
+    btnEst.style.color = '#666';
+    contAula.style.display = 'block';
+    contEst.style.display = 'none';
+  } else {
+    btnEst.style.background = '#1a237e';
+    btnEst.style.color = '#fff';
+    btnAula.style.background = '#e0e0e0';
+    btnAula.style.color = '#666';
+    contEst.style.display = 'block';
+    contAula.style.display = 'none';
+  }
+}
+
+function activarQRAsistEst() {
+  var div = document.getElementById('qrReaderAsistEst');
+  var btn = document.getElementById('btnActivarQRAsist');
+  if (qrAsist) {
+    try{qrAsist.stop();}catch(e){}
+    qrAsist = null;
+    div.style.minHeight = '0';
+    div.style.display = 'none';
+    btn.textContent = '📷 Activar Camara QR';
+    return;
+  }
+  div.style.minHeight = '300px';
+  div.style.display = 'block';
+  btn.textContent = '⏹ Detener Camara';
+  iniciarQRAsistEst();
+}
+
+function iniciarQRAsistEst() {
+  try {
+    if (qrAsist) { try{qrAsist.stop();}catch(e){} qrAsist=null; }
+    qrAsist = new Html5Qrcode("qrReaderAsistEst");
+    Html5Qrcode.getCameras().then(function(cameras) {
+      if (!cameras || cameras.length === 0) return;
+      qrAsist.start(cameras[0].id,
+        {fps:15, qrbox:function(w,h){return {width:Math.floor(w*0.8),height:Math.floor(h*0.8)};}},
+        function(texto) {
+          qrAsist.stop(); qrAsist = null;
+          var id = texto.trim();
+          var campoId = document.getElementById('asistId');
+          if (campoId) campoId.value = id;
+          buscarAsistenciaEstudianteConId(id);
+        },
+        function(){}
+      ).catch(function(){});
+    }).catch(function(){});
+  } catch(e) {}
+}
+
+function buscarAsistenciaEstudiante() {
+  var id = document.getElementById('asistId').value.trim();
+  if (!id) { alert('Ingresa el ID'); return; }
+  buscarAsistenciaEstudianteConId(id);
+}
+
+function buscarAsistenciaEstudianteConId(id) {
+  document.getElementById('fichaAsistEstudiante').innerHTML = '<div class="loading"><div class="spinner"></div><br>Buscando...</div>';
+  api('login', {usuario: SESSION.usuario, clave: SESSION.clave})
+    .then(function(lr) {
+      if (lr.ok) SESSION.token = lr.token;
+      // Obtener reporte del mes actual
+      var hoy = new Date();
+      var p = new URLSearchParams({
+        action: 'obtenerReporteRango',
+        token: SESSION.token,
+        idEstudiante: id,
+        fechaInicio: '2026-04-20',
+        fechaFin: hoy.getFullYear()+'-'+String(hoy.getMonth()+1).padStart(2,'0')+'-'+String(hoy.getDate()).padStart(2,'0')
+      });
+      return fetch(WEBAPP_URL+'?'+p.toString()).then(function(r){ return r.json(); });
+    })
+    .then(function(res) {
+      if (!res.ok) {
+        document.getElementById('fichaAsistEstudiante').innerHTML =
+          '<div class="alert alert-error">'+res.mensaje+'</div>'+
+          '<button class="btnBuscar" style="margin-top:8px" onclick="nuevaBusquedaAsistEst()">🔍 Nueva Busqueda</button>';
+        return;
+      }
+      var e = res.estudiante;
+      var r = res.resumen;
+      var html = '<div class="fichaGrid" style="margin-bottom:12px">'+
+        fichaItem('Nombre', e.nombre)+
+        fichaItem('Grado', e.grado+' '+e.seccion)+
+      '</div>';
+      html += '<div class="statsGrid" style="margin-bottom:12px">'+
+        statCard(r.puntuales,'Puntuales','verde')+
+        statCard(r.tardanzas,'Tardanzas','naranja')+
+        statCard(r.faltas,'Faltas','rojo')+
+      '</div>';
+      if (res.registros && res.registros.length > 0) {
+        html += '<table class="repTable"><thead><tr><th>Fecha</th><th>Hora</th><th>Estado</th></tr></thead><tbody>';
+        res.registros.forEach(function(reg) {
+          var cls = (reg.estado||'').toUpperCase()==='PUNTUAL'?'cel-P':(reg.estado||'').toUpperCase()==='TARDE'?'cel-T':'cel-F';
+          html += '<tr><td>'+reg.fecha+'</td><td>'+reg.horaEntrada+'</td><td class="'+cls+'">'+reg.estado+'</td></tr>';
+        });
+        html += '</tbody></table>';
+      }
+      html += '<div style="margin-top:12px"><button class="btnBuscar" onclick="nuevaBusquedaAsistEst()">🔍 Nueva Busqueda</button></div>';
+      document.getElementById('fichaAsistEstudiante').innerHTML = html;
+    })
+    .catch(function() {
+      document.getElementById('fichaAsistEstudiante').innerHTML = '<div class="alert alert-error">Error</div>';
+    });
+}
+
+function nuevaBusquedaAsistEst() {
+  document.getElementById('fichaAsistEstudiante').innerHTML = '';
+  document.getElementById('asistId').value = '';
+  setTimeout(function(){ iniciarQRAsistEst(); }, 300);
+}
+
+function nuevaBusquedaEstudiante() {
+  document.getElementById('fichaEstudiante').innerHTML = '';
+  document.getElementById('buscarId').value = '';
+  setTimeout(function(){ iniciarQREstudiante(); }, 300);
+}
+
+function nuevaBusquedaJustif() {
+  ESTUDIANTE_JUSTIF = null;
+  document.getElementById('justifEstudiante').style.display = 'none';
+  document.getElementById('justifId').value = '';
+  document.getElementById('justifMsg').innerHTML = '';
+  setTimeout(function(){ iniciarQRJustif(); }, 300);
+}
+
+function iniciarQREstudiante() {
+  try {
+    if (qrEst) { try{qrEst.stop();}catch(e){} qrEst=null; }
+    qrEst = new Html5Qrcode("qrReaderEstudiante");
+    Html5Qrcode.getCameras().then(function(cameras) {
+      if (!cameras || cameras.length === 0) return;
+      qrEst.start(cameras[0].id,
+        {fps:15, qrbox:function(w,h){return {width:Math.floor(w*0.8),height:Math.floor(h*0.8)};}},
+        function(texto) {
+          qrEst.stop(); qrEst = null;
+          document.getElementById('buscarId').value = texto.trim();
+          buscarEstudianteConId(texto.trim());
+        },
+        function(){}
+      ).catch(function(){});
+    }).catch(function(){});
+  } catch(e) {}
+}
+
+function iniciarQRJustif() {
+  try {
+    if (qrJustif_) { try{qrJustif_.stop();}catch(e){} qrJustif_=null; }
+    qrJustif_ = new Html5Qrcode("qrReaderJustif");
+    Html5Qrcode.getCameras().then(function(cameras) {
+      if (!cameras || cameras.length === 0) return;
+      qrJustif_.start(cameras[0].id,
+        {fps:15, qrbox:function(w,h){return {width:Math.floor(w*0.8),height:Math.floor(h*0.8)};}},
+        function(texto) {
+          qrJustif_.stop(); qrJustif_ = null;
+          document.getElementById('justifId').value = texto.trim();
+          buscarEstudianteJustifConId(texto.trim());
+          setTimeout(function(){ iniciarQRJustif(); }, 3000);
+        },
+        function(){}
+      ).catch(function(){});
+    }).catch(function(){});
+  } catch(e) {}
+}
+
+function pararQRs() {
+  if (qrEst) { try { qrEst.stop(); } catch(e){} qrEst = null; }
+  if (qrJustif_) { try { qrJustif_.stop(); } catch(e){} qrJustif_ = null; }
+  if (qrAsist) { try { qrAsist.stop(); } catch(e){} qrAsist = null; qrAsistActivo = false; }
+}
+
+// ASISTENCIA
+function cargarAsistencia() {
+  var grado = document.getElementById('filtGrado').value;
+  var seccion = document.getElementById('filtSeccion').value;
+  if (!grado || !seccion) { alert('Selecciona grado y seccion'); return; }
+  document.getElementById('tablaAsistencia').innerHTML = '<div class="loading"><div class="spinner"></div><br>Cargando...</div>';
+  document.getElementById('statsAsistencia').style.display = 'none';
+
+  var hoy = new Date();
+  var anio = hoy.getFullYear();
+  var mes = hoy.getMonth()+1;
+
+  api('login', {usuario: SESSION.usuario, clave: SESSION.clave})
+    .then(function(lr) {
+      if (lr.ok) SESSION.token = lr.token;
+      var p = new URLSearchParams({action:'obtenerHistorialSeccion', token:SESSION.token,
+        grado:grado, seccion:seccion, anio:anio, mes:mes});
+      return fetch(WEBAPP_URL+'?'+p.toString()).then(function(r){ return r.json(); });
+    })
+    .then(function(res) {
+      if (!res.ok) {
+        document.getElementById('tablaAsistencia').innerHTML = '<div class="alert alert-error">'+res.mensaje+'</div>';
+        return;
+      }
+      renderHistorialAsistencia(res);
+    })
+    .catch(function(){
+      document.getElementById('tablaAsistencia').innerHTML = '<div class="alert alert-error">Error al cargar</div>';
+    });
+}
+
+function mostrarTablaAsistencia(grado, seccion, fecha) {
+  api('login', {usuario: SESSION.usuario, clave: SESSION.clave})
+    .then(function(loginRes) {
+      if (loginRes.ok) SESSION.token = loginRes.token;
+      var p = new URLSearchParams({action: 'obtenerAsistenciaDia', token: SESSION.token, fecha: fecha, grado: grado, seccion: seccion});
+      return fetch(WEBAPP_URL + '?' + p.toString()).then(function(r){ return r.json(); });
+    })
+    .then(function(res) {
+      if (!res.ok) {
+        document.getElementById('tablaAsistencia').innerHTML = '<div class="alert alert-error">'+res.mensaje+'</div>';
+        return;
+      }
+      renderTablaAsistencia(res.registros, grado, seccion, fecha);
+    })
+    .catch(function(err) {
+      document.getElementById('tablaAsistencia').innerHTML = '<div class="alert alert-error">Error al cargar datos</div>';
+    });
+}
+
+function renderHistorialAsistencia(data) {
+  var cont = document.getElementById('tablaAsistencia');
+  var stats = document.getElementById('statsAsistencia');
+  var meses = ['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  var nombreMes = meses[parseInt(data.mes)] + ' ' + data.anio;
+  var diasSemana = ['D','L','M','M','J','V','S'];
+
+  // Calcular dias con info de fin de semana
+  var dias = data.fechas.map(function(f) {
+    var p = f.split('-');
+    var diaSem = new Date(parseInt(p[0]), parseInt(p[1])-1, parseInt(p[2])).getDay();
+    return { num: parseInt(p[2]), fecha: f, esFinde: diaSem===0||diaSem===6, diaSem: diaSem };
+  });
+
+  // Estadisticas globales
+  var totP=0,totT=0,totF=0,totJ=0;
+  data.estudiantes.forEach(function(e){ totP+=e.totP; totT+=e.totT; totF+=e.totF; totJ+=e.totJ; });
+  stats.style.display = 'grid';
+  stats.innerHTML =
+    statCard(totP,'Puntuales','verde')+statCard(totT,'Tardanzas','naranja')+
+    statCard(totF,'Faltas','rojo')+statCard(totJ,'Justificados','azul')+
+    statCard(data.estudiantes.length,'Total','gris');
+
+  var html = '<div style="overflow-x:auto"><table class="repTable"><thead>';
+  // Fila mes
+  html += '<tr><th colspan="2" style="text-align:left;font-size:14px">'+data.grado+' '+data.seccion+' — '+nombreMes+'</th>';
+  dias.forEach(function(d){
+    html += '<th style="background:'+(d.esFinde?'#9e9e9e':'#1a237e')+'">'+d.num+'</th>';
+  });
+  html += '<th style="background:#2e7d32">P</th><th style="background:#e65100">T</th><th style="background:#c62828">F</th><th style="background:#1565c0">J</th></tr>';
+  // Fila dias semana
+  html += '<tr><th></th><th></th>';
+  dias.forEach(function(d){
+    html += '<th style="background:'+(d.esFinde?'#bdbdbd':'#3949ab')+';font-size:10px">'+diasSemana[d.diaSem]+'</th>';
+  });
+  html += '<th></th><th></th><th></th><th></th></tr></thead><tbody>';
+
+  // Filas estudiantes
+  data.estudiantes.forEach(function(est) {
+    html += '<tr><td>'+est.nro+'</td><td class="td-nombre">'+est.nombre+'</td>';
+    est.dias.forEach(function(d, idx) {
+      if (dias[idx].esFinde) { html += '<td style="background:#eeeeee">-</td>'; return; }
+      if (d === '-') { html += '<td style="background:#fafafa;color:#ccc">·</td>'; return; }
+      var cls = d==='P'?'cel-P':d==='T'?'cel-T':d==='J'?'cel-J':'cel-F';
+      html += '<td class="'+cls+'">'+d+'</td>';
+    });
+    html += '<td style="background:#e8f5e9;font-weight:700;color:#2e7d32">'+est.totP+'</td>';
+    html += '<td style="background:#fff3e0;font-weight:700;color:#e65100">'+est.totT+'</td>';
+    html += '<td style="background:#ffebee;font-weight:700;color:#c62828">'+est.totF+'</td>';
+    html += '<td style="background:#e3f2fd;font-weight:700;color:#1565c0">'+est.totJ+'</td>';
+    html += '</tr>';
+  });
+  html += '</tbody></table></div>';
+  cont.innerHTML = html;
+}
+
+function renderTablaAsistencia(registros, grado, seccion, fecha) {
+  var cont = document.getElementById('tablaAsistencia');
+  var stats = document.getElementById('statsAsistencia');
+
+  if (!registros || registros.length === 0) {
+    cont.innerHTML = '<div class="alert alert-info">No hay estudiantes en esta seccion.</div>';
+    stats.style.display = 'none';
+    return;
+  }
+
+  // Calcular dias del mes desde inicio del sistema
+  var FECHA_INICIO = '2026-05-06'; // Fecha inicio pruebas RBR
+  var hoy = new Date();
+  var hoyStr = hoy.getFullYear()+'-'+String(hoy.getMonth()+1).padStart(2,'0')+'-'+String(hoy.getDate()).padStart(2,'0');
+  var partesFecha = fecha.split('-');
+  var anioMes = parseInt(partesFecha[0]);
+  var mesMes = parseInt(partesFecha[1]);
+  var diasEnMes = new Date(anioMes, mesMes, 0).getDate();
+
+  var dias = [];
+  for (var d = 1; d <= diasEnMes; d++) {
+    var fechaDia = anioMes+'-'+String(mesMes).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    var diaSemana = new Date(anioMes, mesMes-1, d).getDay();
+    dias.push({
+      num: d,
+      fecha: fechaDia,
+      esFinde: diaSemana === 0 || diaSemana === 6,
+      esFuturo: fechaDia > hoyStr,
+      esAnteriorInicio: fechaDia < FECHA_INICIO
+    });
+  }
+
+  var meses = ['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  var nombreMes = meses[mesMes] + ' ' + anioMes;
+
+  // Estadisticas
+  var puntuales=0, tardes=0, faltas=0, justificados=0;
+  registros.forEach(function(r){
+    var e = (r.estado||'').toUpperCase();
+    if(e==='PUNTUAL') puntuales++;
+    else if(e==='TARDE') tardes++;
+    else if(e==='FALTA') faltas++;
+    else if(e==='JUSTIFICADO') justificados++;
+  });
+
+  stats.style.display = 'grid';
+  stats.innerHTML =
+    statCard(puntuales,'Puntuales','verde')+
+    statCard(tardes,'Tardanzas','naranja')+
+    statCard(faltas,'Faltas','rojo')+
+    statCard(justificados,'Justificados','azul')+
+    statCard(registros.length,'Total','gris');
+
+  // Tabla igual que reportes
+  var html = '<div style="overflow-x:auto"><table class="repTable">';
+  html += '<thead>';
+  html += '<tr><th colspan="2" style="text-align:left;font-size:15px">'+grado+' '+seccion+' — '+nombreMes+'</th>';
+  dias.forEach(function(d){
+    var bg = d.esFinde ? '#9e9e9e' : d.esAnteriorInicio ? '#bdbdbd' : '#1a237e';
+    html += '<th style="background:'+bg+'">'+d.num+'</th>';
+  });
+  html += '<th style="background:#2e7d32">P</th><th style="background:#e65100">T</th><th style="background:#c62828">F</th><th style="background:#1565c0">J</th>';
+  html += '</tr>';
+
+  var diasSemana = ['D','L','M','M','J','V','S'];
+  html += '<tr><th></th><th></th>';
+  dias.forEach(function(d){
+    var diaSem = new Date(anioMes, mesMes-1, d.num).getDay();
+    var bg = d.esFinde ? '#bdbdbd' : d.esAnteriorInicio ? '#d0d0d0' : '#3949ab';
+    html += '<th style="background:'+bg+';font-size:10px">'+diasSemana[diaSem]+'</th>';
+  });
+  html += '<th></th><th></th><th></th><th></th></tr>';
+  html += '</thead><tbody>';
+
+  registros.forEach(function(r, i) {
+    html += '<tr><td>'+(i+1)+'</td><td class="td-nombre">'+r.nombre+'</td>';
+    var totP=0,totT=0,totF=0,totJ=0;
+    dias.forEach(function(dia){
+      if (dia.esFinde || dia.esAnteriorInicio) {
+        html += '<td style="background:#eeeeee">-</td>';
+        return;
+      }
+      if (dia.esFuturo) {
+        html += '<td style="background:#fafafa;color:#ccc">·</td>';
+        return;
+      }
+      var estado = '---';
+      if (r.historial && r.historial[dia.fecha]) {
+        estado = r.historial[dia.fecha];
+      } else if (dia.fecha === fecha) {
+        estado = (r.estado||'FALTA').charAt(0);
+        if(r.estado==='PUNTUAL') estado='P';
+        else if(r.estado==='TARDE') estado='T';
+        else if(r.estado==='JUSTIFICADO') estado='J';
+        else estado='F';
+      } else {
+        estado = 'F';
+      }
+      var cls = estado==='P'?'cel-P':estado==='T'?'cel-T':estado==='J'?'cel-J':'cel-F';
+      if(estado==='P') totP++;
+      else if(estado==='T') totT++;
+      else if(estado==='J') totJ++;
+      else totF++;
+      html += '<td class="'+cls+'">'+estado+'</td>';
+    });
+    html += '<td style="background:#e8f5e9;font-weight:700;color:#2e7d32">'+totP+'</td>';
+    html += '<td style="background:#fff3e0;font-weight:700;color:#e65100">'+totT+'</td>';
+    html += '<td style="background:#ffebee;font-weight:700;color:#c62828">'+totF+'</td>';
+    html += '<td style="background:#e3f2fd;font-weight:700;color:#1565c0">'+totJ+'</td>';
+    html += '</tr>';
+  });
+  html += '</tbody></table></div>';
+  cont.innerHTML = html;
+}
+
+
+function statCard(num, label, color) {
+  return '<div class="statCard '+color+'"><div class="statNum">'+num+'</div><div class="statLabel">'+label+'</div></div>';
+}
+
+function badgeEstado(estado) {
+  var e = (estado||'').toUpperCase();
+  var cls = e==='PUNTUAL'?'puntual':e==='TARDE'?'tarde':e==='FALTA'?'falta':e==='JUSTIFICADO'?'justificado':'fuera';
+  return '<span class="badge badge-'+cls+'">'+e+'</span>';
+}
+
+function colorFila(estado) {
+  var e = (estado||'').toUpperCase();
+  if(e==='PUNTUAL') return '#f1f8e9';
+  if(e==='TARDE') return '#fff8e1';
+  if(e==='FALTA') return '#ffebee';
+  if(e==='JUSTIFICADO') return '#e3f2fd';
+  return '#fff';
+}
+
+function verMes() {
+  alert('Vista mensual: proximamente disponible');
+}
+
+// JUSTIFICACIONES
+function buscarEstudianteJustif() {
+  var id = document.getElementById('justifId').value.trim();
+  if (!id) { alert('Ingresa el ID del estudiante'); return; }
+  buscarEstudianteJustifConId(id);
+}
+
+function buscarEstudianteJustifConId(id) {
+  api('login', {usuario: SESSION.usuario, clave: SESSION.clave})
+    .then(function(loginRes) {
+      if (loginRes.ok) SESSION.token = loginRes.token;
+      var p = new URLSearchParams({action:'obtenerEstudiante', token: SESSION.token, id: id});
+      return fetch(WEBAPP_URL+'?'+p.toString()).then(function(r){ return r.json(); });
+    })
+    .then(function(res) {
+      if (!res.ok) { alert(res.mensaje); return; }
+      ESTUDIANTE_JUSTIF = res.estudiante;
+      document.getElementById('justifNombre').textContent =
+        res.estudiante.nombre + ' | ' + res.estudiante.grado + ' ' + res.estudiante.seccion;
+      document.getElementById('justifEstudiante').style.display = 'block';
+      var hoy = new Date().toISOString().split('T')[0];
+      document.getElementById('justifFecha').value = hoy;
+    })
+    .catch(function(){ alert('Error al buscar estudiante'); });
+}
+
+function registrarJustificacion() {
+  if (!ESTUDIANTE_JUSTIF) { alert('Busca un estudiante primero'); return; }
+  var fecha = document.getElementById('justifFecha').value;
+  var tipo = document.getElementById('justifTipo').value;
+  var motivo = document.getElementById('justifMotivo').value.trim();
+  if (!fecha || !motivo) { alert('Completa todos los campos'); return; }
+
+  api('login', {usuario: SESSION.usuario, clave: SESSION.clave})
+    .then(function(loginRes) {
+      if (loginRes.ok) SESSION.token = loginRes.token;
+      var p = new URLSearchParams({
+        action: 'registrarJustificacion',
+        token: SESSION.token,
+        idEstudiante: ESTUDIANTE_JUSTIF.id,
+        fechaFalta: fecha,
+        tipoFalta: tipo,
+        motivo: motivo
+      });
+      return fetch(WEBAPP_URL+'?'+p.toString()).then(function(r){ return r.json(); });
+    })
+    .then(function(res) {
+      var msg = document.getElementById('justifMsg');
+      if (res.ok) {
+        msg.innerHTML = '<div class="alert alert-success">Justificacion registrada correctamente</div>';
+        document.getElementById('justifMotivo').value = '';
+      } else {
+        msg.innerHTML = '<div class="alert alert-error">'+res.mensaje+'</div>';
+      }
+    })
+    .catch(function(){ alert('Error al registrar'); });
+}
+
+function cargarJustificaciones() {
+  var grado = document.getElementById('filtJustifGrado').value;
+  var seccion = document.getElementById('filtJustifSeccion').value;
+  document.getElementById('tablaJustificaciones').innerHTML = '<div class="loading"><div class="spinner"></div><br>Cargando...</div>';
+  api('login', {usuario: SESSION.usuario, clave: SESSION.clave})
+    .then(function(loginRes) {
+      if (loginRes.ok) SESSION.token = loginRes.token;
+      var p = new URLSearchParams({action:'obtenerJustificaciones', token: SESSION.token, grado: grado, seccion: seccion});
+      return fetch(WEBAPP_URL+'?'+p.toString()).then(function(r){ return r.json(); });
+    })
+    .then(function(res) {
+      if (!res.ok || !res.justificaciones) {
+        document.getElementById('tablaJustificaciones').innerHTML = '<div class="alert alert-info">No hay justificaciones</div>';
+        return;
+      }
+      var html = '<table><thead><tr><th>Estudiante</th><th>Fecha Falta</th><th>Tipo</th><th>Motivo</th><th>Registrado</th><th>Hora</th></tr></thead><tbody>';
+      res.justificaciones.forEach(function(j){
+        html += '<tr><td><b>'+j.nombre+'</b><br><small>'+j.grado+' '+j.seccion+'</small></td>'+
+          '<td>'+j.fechaFalta+'</td>'+
+          '<td><span class="badge badge-justificado">'+j.tipo+'</span></td>'+
+          '<td>'+j.motivo+'</td>'+
+          '<td>'+j.justificadoPor+'</td>'+
+          '<td>'+j.hora+'</td></tr>';
+      });
+      html += '</tbody></table>';
+      document.getElementById('tablaJustificaciones').innerHTML = html;
+    })
+    .catch(function(){ document.getElementById('tablaJustificaciones').innerHTML = '<div class="alert alert-error">Error</div>'; });
+}
+
+// ESTUDIANTE
+function buscarEstudiante() {
+  var id = document.getElementById('buscarId').value.trim();
+  if (!id) { alert('Ingresa el ID'); return; }
+  buscarEstudianteConId(id);
+}
+
+function buscarEstudianteConId(id) {
+  document.getElementById('fichaEstudiante').innerHTML = '<div class="loading"><div class="spinner"></div><br>Buscando...</div>';
+
+  api('login', {usuario: SESSION.usuario, clave: SESSION.clave})
+    .then(function(loginRes) {
+      if (loginRes.ok) SESSION.token = loginRes.token;
+      var p = new URLSearchParams({action:'obtenerEstudiante', token: SESSION.token, id: id});
+      return fetch(WEBAPP_URL+'?'+p.toString()).then(function(r){ return r.json(); });
+    })
+    .then(function(res) {
+      if (!res.ok) {
+        document.getElementById('fichaEstudiante').innerHTML = 
+          '<div class="alert alert-error">'+res.mensaje+'</div>'+
+          '<button class="btnBuscar" style="margin-top:12px" onclick="nuevaBusquedaEstudiante()">🔍 Nueva Busqueda</button>';
+        return;
+      }
+      var e = res.estudiante;
+      var r = res.resumen || {};
+      var html =
+        '<div class="fichaGrid" style="margin-bottom:16px">'+
+          fichaItem('ID', e.id) +
+          fichaItem('Nombre', e.nombre) +
+          fichaItem('Grado', e.grado) +
+          fichaItem('Seccion', e.seccion) +
+          fichaItem('DNI', e.dni||'---') +
+          fichaItem('Tutor', e.tutor||'---') +
+          fichaItem('Apoderado', e.apoderado||'---') +
+          fichaItem('Cel. Apoderado', e.celApoderado||'---') +
+          fichaItem('Direccion', e.direccion||'---') +
+          fichaItem('Enfermedad', e.enfermedad||'---') +
+        '</div>'+
+        '<div class="statsGrid">'+
+          statCard(r.puntuales||0,'Puntuales','verde')+
+          statCard(r.tardanzas||0,'Tardanzas','naranja')+
+          statCard(r.faltas||0,'Faltas','rojo')+
+          statCard(r.totalJustificaciones||0,'Justificaciones','azul')+
+        '</div>'+
+        '<div style="margin-top:16px;padding-top:16px;border-top:1px solid #eee">'+
+          '<button class="btnBuscar" onclick="nuevaBusquedaEstudiante()">🔍 Nueva Busqueda</button>'+
+        '</div>';
+      document.getElementById('fichaEstudiante').innerHTML = html;
+    })
+    .catch(function(){ document.getElementById('fichaEstudiante').innerHTML = '<div class="alert alert-error">Error</div>'; });
+}
+
+function fichaItem(label, value) {
+  return '<div class="fichaItem"><label>'+label+'</label><span>'+value+'</span></div>';
+}
+
+// REPORTES
+// REPORTE MENSUAL
+function generarReporteMensual() {
+  var grado = document.getElementById('repGrado').value;
+  var mes = document.getElementById('repMes').value;
+  if (!grado || !mes) { alert('Selecciona grado y mes'); return; }
+  var partes = mes.split('-');
+  var anio = partes[0];
+  var mesNum = partes[1];
+  document.getElementById('repMensual').innerHTML = '<div class="loading"><div class="spinner"></div><br>Generando reporte...</div>';
+
+  api('login', {usuario: SESSION.usuario, clave: SESSION.clave})
+    .then(function(lr) {
+      if (lr.ok) SESSION.token = lr.token;
+      var p = new URLSearchParams({action:'obtenerReporteMensual', token:SESSION.token, grado:grado, anio:anio, mes:mesNum});
+      return fetch(WEBAPP_URL+'?'+p.toString()).then(function(r){ return r.json(); });
+    })
+    .then(function(res) {
+      if (!res.ok) {
+        document.getElementById('repMensual').innerHTML = '<div class="alert alert-error">'+res.mensaje+'</div>';
+        return;
+      }
+      renderReporteMensual(res);
+    })
+    .catch(function(err) {
+      document.getElementById('repMensual').innerHTML = '<div class="alert alert-error">Error al cargar reporte</div>';
+    });
+}
+
+function renderReporteMensual(data) {
+  var meses = ['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  var html = '<div style="margin-bottom:16px"><b style="font-size:16px;color:#1a237e">'+data.grado+' — '+meses[parseInt(data.mes)]+' '+data.anio+'</b></div>';
+
+  // Dias del mes como encabezados
+  var dias = data.fechas.map(function(f){ return f.split('-')[2]; });
+
+  data.secciones.forEach(function(sec) {
+    if (!sec.estudiantes.length) return;
+    html += '<div class="rep-seccion-title">SECCIÓN '+sec.seccion+' — '+sec.total+' estudiantes</div>';
+    html += '<div style="overflow-x:auto;margin-bottom:16px"><table class="repTable">';
+    html += '<thead><tr>';
+    html += '<th style="width:30px">N°</th>';
+    html += '<th class="th-nombre">Apellidos y Nombres</th>';
+    dias.forEach(function(d){ html += '<th>'+d+'</th>'; });
+    html += '<th style="background:#2e7d32">P</th>';
+    html += '<th style="background:#e65100">T</th>';
+    html += '<th style="background:#c62828">F</th>';
+    html += '<th style="background:#1565c0">J</th>';
+    html += '</tr></thead><tbody>';
+
+    sec.estudiantes.forEach(function(est) {
+      html += '<tr>';
+      html += '<td>'+est.nro+'</td>';
+      html += '<td class="td-nombre">'+est.nombre+'</td>';
+      est.dias.forEach(function(d) {
+        var cls = d==='P'?'cel-P':d==='T'?'cel-T':d==='F'?'cel-F':d==='J'?'cel-J':'cel-vacio';
+        html += '<td class="'+cls+'">'+d+'</td>';
+      });
+      html += '<td style="background:#e8f5e9;font-weight:700;color:#2e7d32">'+est.totP+'</td>';
+      html += '<td style="background:#fff3e0;font-weight:700;color:#e65100">'+est.totT+'</td>';
+      html += '<td style="background:#ffebee;font-weight:700;color:#c62828">'+est.totF+'</td>';
+      html += '<td style="background:#e3f2fd;font-weight:700;color:#1565c0">'+est.totJ+'</td>';
+      html += '</tr>';
+    });
+
+    // Totales por dia
+    html += '<tr class="rep-totales"><td colspan="2" style="text-align:right">TOTALES:</td>';
+    dias.forEach(function(d, idx) {
+      var p=0,t=0,f=0,j=0;
+      sec.estudiantes.forEach(function(est) {
+        var val = est.dias[idx];
+        if(val==='P') p++;
+        else if(val==='T') t++;
+        else if(val==='F') f++;
+        else if(val==='J') j++;
+      });
+      html += '<td style="font-size:10px;padding:2px"><span style="color:#2e7d32">'+p+'</span><br><span style="color:#e65100">'+t+'</span><br><span style="color:#c62828">'+f+'</span></td>';
+    });
+    html += '<td></td><td></td><td></td><td></td></tr>';
+    html += '</tbody></table></div>';
+  });
+
+  document.getElementById('repMensual').innerHTML = html;
+  document.getElementById('repBotones').style.display = 'flex';
+}
+
+// REPORTE INDIVIDUAL
+function generarReporteIndividual() {
+  var id = document.getElementById('repId').value.trim();
+  var desde = document.getElementById('repDesde').value;
+  var hasta = document.getElementById('repHasta').value;
+  if (!id || !desde || !hasta) { alert('Completa todos los campos'); return; }
+  document.getElementById('repIndividual').innerHTML = '<div class="loading"><div class="spinner"></div><br>Generando...</div>';
+
+  api('login', {usuario: SESSION.usuario, clave: SESSION.clave})
+    .then(function(lr) {
+      if (lr.ok) SESSION.token = lr.token;
+      var p = new URLSearchParams({action:'obtenerReporteRango', token:SESSION.token, idEstudiante:id, fechaInicio:desde, fechaFin:hasta});
+      return fetch(WEBAPP_URL+'?'+p.toString()).then(function(r){ return r.json(); });
+    })
+    .then(function(res) {
+      if (!res.ok) {
+        document.getElementById('repIndividual').innerHTML = '<div class="alert alert-error">'+res.mensaje+'</div>';
+        return;
+      }
+      var e = res.estudiante;
+      var r = res.resumen;
+      var html = '<div style="margin-bottom:12px"><b>'+e.nombre+'</b> | '+e.grado+' '+e.seccion+'</div>';
+      html += '<div class="statsGrid" style="margin-bottom:16px">'+
+        statCard(r.puntuales,'Puntuales','verde')+
+        statCard(r.tardanzas,'Tardanzas','naranja')+
+        statCard(r.faltas,'Faltas','rojo')+
+      '</div>';
+      html += '<table class="repTable"><thead><tr><th>Fecha</th><th>Hora</th><th>Estado</th></tr></thead><tbody>';
+      res.registros.forEach(function(reg) {
+        var cls = reg.estado==='PUNTUAL'?'cel-P':reg.estado==='TARDE'?'cel-T':'cel-F';
+        html += '<tr><td>'+reg.fecha+'</td><td>'+reg.horaEntrada+'</td><td class="'+cls+'">'+reg.estado+'</td></tr>';
+      });
+      html += '</tbody></table>';
+      html += '<button class="btnSecundario" style="margin-top:12px" onclick="imprimirReporte()">🖨️ Imprimir</button>';
+      document.getElementById('repIndividual').innerHTML = html;
+    })
+    .catch(function() {
+      document.getElementById('repIndividual').innerHTML = '<div class="alert alert-error">Error</div>';
+    });
+}
+
+// DESCARGAR EXCEL
+function descargarExcel() {
+  var contenido = document.getElementById('repMensual').innerHTML;
+  if (!contenido || contenido.indexOf('table') < 0) { alert('Genera el reporte primero'); return; }
+  var blob = new Blob(['﻿'+document.getElementById('repMensual').outerHTML], {type:'application/vnd.ms-excel'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'Reporte_Asistencia.xls';
+  a.click();
+}
+
+function imprimirReporte() { window.print(); }
+
+function generarReporteExcel() {
+  alert('Reporte Excel: proximamente disponible.\nPor ahora puedes descargar la hoja ASISTENCIA del Google Sheets directamente.');
+}
+
+// ESTADISTICAS
+function cargarEstadisticas() {
+  var grado = document.getElementById('statGrado') ? document.getElementById('statGrado').value : '';
+  var seccion = document.getElementById('statSeccion') ? document.getElementById('statSeccion').value : '';
+  document.getElementById('statsGenerales').innerHTML = '<div class="loading"><div class="spinner"></div><br>Cargando estadisticas...</div>';
+
+  api('login', {usuario: SESSION.usuario, clave: SESSION.clave})
+    .then(function(loginRes) {
+      if (loginRes.ok) SESSION.token = loginRes.token;
+      var p = new URLSearchParams({action:'obtenerEstadisticasDashboard', token: SESSION.token, grado: grado, seccion: seccion});
+      return fetch(WEBAPP_URL+'?'+p.toString()).then(function(r){ return r.json(); });
+    })
+    .then(function(res) {
+      if (!res.ok) {
+        document.getElementById('statsGenerales').innerHTML = '<div class="alert alert-error">'+res.mensaje+'</div>';
+        return;
+      }
+      renderEstadisticas(res);
+    })
+    .catch(function(){ document.getElementById('statsGenerales').innerHTML = '<div class="alert alert-error">Error al cargar</div>'; });
+}
+
+function renderEstadisticas(res) {
+  var hoy = res.fecha || new Date().toLocaleDateString('es-PE');
+  var hoy_data = res.hoy || {};
+  var acumulado = res.acumulado || {};
+  var porGrado = res.porGrado || [];
+
+  var html = '';
+
+  // RESUMEN DE HOY
+  html += '<div style="margin-bottom:16px"><b style="color:#1a237e;font-size:15px">📅 Hoy — '+hoy+'</b></div>';
+  html += '<div class="statsGrid" style="margin-bottom:20px">'+
+    statCard(res.totalEstudiantes||0,'Total Estudiantes','azul')+
+    statCard(hoy_data.puntuales||0,'Puntuales','verde')+
+    statCard(hoy_data.tardanzas||0,'Tardanzas','naranja')+
+    statCard(hoy_data.faltas||0,'Faltas','rojo')+
+    statCard(hoy_data.justificados||0,'Justificados','azul')+
+    statCard(hoy_data.sinRegistro||0,'Sin Registro','gris')+
+  '</div>';
+
+  // ACUMULADO DESDE INICIO
+  html += '<div style="margin-bottom:12px"><b style="color:#1a237e;font-size:15px">📊 Acumulado desde 06/05/2026</b></div>';
+  html += '<div class="statsGrid" style="margin-bottom:20px">'+
+    statCard(acumulado.totalRegistros||0,'Total Registros','azul')+
+    statCard(acumulado.puntuales||0,'Puntuales','verde')+
+    statCard(acumulado.tardanzas||0,'Tardanzas','naranja')+
+    statCard(acumulado.faltas||0,'Faltas','rojo')+
+    statCard(acumulado.justificados||0,'Justificados','azul')+
+  '</div>';
+
+  // TABLA POR GRADO Y SECCION
+  if (porGrado && porGrado.length > 0) {
+    html += '<div style="margin-bottom:12px"><b style="color:#1a237e;font-size:15px">📋 Por Grado y Sección — Hoy</b></div>';
+    html += '<div style="overflow-x:auto"><table class="repTable">';
+    html += '<thead><tr><th>Grado</th><th>Sección</th><th>Total</th>';
+    html += '<th style="background:#2e7d32">P</th><th style="background:#e65100">T</th>';
+    html += '<th style="background:#c62828">F</th><th style="background:#1565c0">J</th>';
+    html += '<th>% Asist.</th></tr></thead><tbody>';
+
+    porGrado.forEach(function(g) {
+      var pct = g.total > 0 ? Math.round((g.puntuales + g.tardanzas + g.justificados) / g.total * 100) : 0;
+      var colorPct = pct >= 90 ? '#2e7d32' : pct >= 75 ? '#e65100' : '#c62828';
+      html += '<tr>';
+      html += '<td><b>'+g.grado+'</b></td>';
+      html += '<td>'+g.seccion+'</td>';
+      html += '<td>'+g.total+'</td>';
+      html += '<td class="cel-P">'+g.puntuales+'</td>';
+      html += '<td class="cel-T">'+g.tardanzas+'</td>';
+      html += '<td class="cel-F">'+g.faltas+'</td>';
+      html += '<td class="cel-J">'+g.justificados+'</td>';
+      html += '<td style="font-weight:700;color:'+colorPct+'">'+pct+'%</td>';
+      html += '</tr>';
+    });
+    html += '</tbody></table></div>';
+  }
+
+  // GRAFICO SIMPLE
+  html += '<div style="margin-top:20px;margin-bottom:12px"><b style="color:#1a237e;font-size:15px">📊 Gráfico del Día</b></div>';
+  var total = (hoy_data.puntuales||0) + (hoy_data.tardanzas||0) + (hoy_data.faltas||0) + (hoy_data.justificados||0);
+  if (total > 0) {
+    var barras = [
+      {label:'Puntuales', val:hoy_data.puntuales||0, color:'#4caf50'},
+      {label:'Tardanzas', val:hoy_data.tardanzas||0, color:'#ff9800'},
+      {label:'Faltas', val:hoy_data.faltas||0, color:'#f44336'},
+      {label:'Justificados', val:hoy_data.justificados||0, color:'#2196f3'}
+    ];
+    html += '<div style="background:#f5f5f5;border-radius:8px;padding:16px">';
+    barras.forEach(function(b) {
+      var pct = Math.round(b.val / total * 100);
+      html += '<div style="margin-bottom:10px">';
+      html += '<div style="display:flex;justify-content:space-between;margin-bottom:4px">';
+      html += '<span style="font-size:13px;font-weight:600">'+b.label+'</span>';
+      html += '<span style="font-size:13px;color:#666">'+b.val+' ('+pct+'%)</span>';
+      html += '</div>';
+      html += '<div style="background:#ddd;border-radius:4px;height:20px">';
+      html += '<div style="background:'+b.color+';width:'+pct+'%;height:100%;border-radius:4px;transition:width .5s"></div>';
+      html += '</div></div>';
+    });
+    html += '</div>';
+  }
+
+  document.getElementById('statsGenerales').innerHTML = html;
+}
+
+
+// SALIR
+function salir() {
+  if (!confirm('Cerrar sesion?')) return;
+  SESSION = null;
+  if (qrEst) qrEst.stop().catch(function(){});
+  if (qrJustif_) qrJustif_.stop().catch(function(){});
+  document.getElementById('appScreen').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('inpUsuario').value = '';
+  document.getElementById('inpClave').value = '';
+  document.getElementById('loginError').style.display = 'none';
+}
+</script>
+  <!-- Footer autor -->
+  <div style="background:#1a237e;color:rgba(255,255,255,0.5);text-align:center;padding:8px;font-size:11px">
+    Desarrollado por <b style="color:rgba(255,255,255,0.8)">Jose Carlos Huamani Quicano</b> | Cel: 954 000 684
+  </div>
+</body>
+</html>
