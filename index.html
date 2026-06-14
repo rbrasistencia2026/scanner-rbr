@@ -6,9 +6,7 @@
 <title>Scanner QR - Asistencia</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
-/* Forzar pantalla completa en tableta */
 html, body { width:100%; height:100%; }
-/* Landscape mode */
 @media (orientation: landscape) {
   #reader { height: calc(100vh - 100px) !important; }
 }
@@ -53,11 +51,8 @@ body { background:#0d0d0d; color:#f0f0f0; font-family:Arial,sans-serif; height:1
 </style>
 </head>
 <body>
-
 <div class="noInternet" id="noInternet">SIN CONEXION</div>
-
 <div id="loginScreen">
-
   <div style="text-align:center;margin-bottom:16px"><img src="https://res.cloudinary.com/dwcirsunu/image/upload/v1777931349/LOGO_SACHABAMBA_gelfg0.jpg" alt="Logo RBR" style="width:90px;height:90px;object-fit:contain;border-radius:50%;background:#fff;padding:6px;box-shadow:0 4px 16px rgba(0,0,0,0.3)"></div>
   <div class="logoTitle" style="font-size:32px;letter-spacing:2px">ASIST QR</div>
   <div class="logoSub">I.E.P. Ricardo Bautista Rivera - Sachabamba</div>
@@ -74,7 +69,6 @@ body { background:#0d0d0d; color:#f0f0f0; font-family:Arial,sans-serif; height:1
     <div>Cel: 954 000 684</div>
   </div>
 </div>
-
 <div id="scannerScreen">
   <div class="scanHeader">
     <div style="display:flex;align-items:center;gap:8px">
@@ -92,7 +86,6 @@ body { background:#0d0d0d; color:#f0f0f0; font-family:Arial,sans-serif; height:1
     </div>
   </div>
 </div>
-
 <div class="resultOverlay" id="resultOverlay">
   <div class="resultCard" id="resultCard">
     <div class="resultEstado" id="resEstado">---</div>
@@ -102,7 +95,6 @@ body { background:#0d0d0d; color:#f0f0f0; font-family:Arial,sans-serif; height:1
     <div class="resultMsg" id="resMsg"></div>
   </div>
 </div>
-
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script>
 var TOKEN = null;
@@ -112,9 +104,7 @@ var PROCESANDO = false;
 var ULTIMO_ID = null;
 var ULTIMO_TIME = 0;
 var TIMER_RES = null;
-
 var WEBAPP_URL = "https://script.google.com/macros/s/AKfycbw_WsiSHuPYkPaf_aLviw6Ao_4AnujKgvD_GoGuHmskZ75aCQWZg1gF824ZN7xe_0yPCw/exec";
-
 function playTone(f,t,d,g,dl){
   try{
     var c=new(window.AudioContext||window.webkitAudioContext)();
@@ -129,7 +119,6 @@ function playTone(f,t,d,g,dl){
 function sndPuntual(){playTone(880,"sine",0.2,0.4);playTone(1100,"sine",0.2,0.3,0.2);}
 function sndTarde(){playTone(440,"triangle",0.3,0.5);playTone(350,"triangle",0.3,0.3,0.3);}
 function sndError(){playTone(200,"sawtooth",0.2,0.5);playTone(150,"sawtooth",0.2,0.4,0.2);}
-
 function checkNet(){
   ONLINE=navigator.onLine;
   document.getElementById("noInternet").style.display=ONLINE?"none":"block";
@@ -137,14 +126,12 @@ function checkNet(){
 window.addEventListener("online",checkNet);
 window.addEventListener("offline",checkNet);
 setInterval(checkNet,5000);
-
 function llamarServidor(accion,datos){
   var p=new URLSearchParams({action:accion});
   if(datos) Object.keys(datos).forEach(function(k){p.append(k,datos[k]);});
   return fetch(WEBAPP_URL+"?"+p.toString())
     .then(function(r){ return r.json(); });
 }
-
 window.onload=function(){
   checkNet();
   document.getElementById("btnLogin").onclick=handleLogin;
@@ -154,7 +141,6 @@ window.onload=function(){
   var t=sessionStorage.getItem("qr_token");
   if(t){TOKEN=t;abrirScanner({nombre:sessionStorage.getItem("qr_nombre")||"",rol:sessionStorage.getItem("qr_rol")||"",institucion:sessionStorage.getItem("qr_inst")||""});}
 };
-
 function handleLogin(){
   if(!ONLINE){mostrarError("Sin conexion");return;}
   var u=document.getElementById("inpUsuario").value.trim();
@@ -177,12 +163,10 @@ function handleLogin(){
     })
     .catch(function(){btn.disabled=false;btn.textContent="INGRESAR";mostrarError("Error de conexion");sndError();});
 }
-
 function mostrarError(msg){
   var el=document.getElementById("loginError");
   el.textContent=msg;el.style.display="block";
 }
-
 function abrirScanner(datos){
   document.getElementById("loginScreen").style.display="none";
   document.getElementById("scannerScreen").style.display="flex";
@@ -191,12 +175,9 @@ function abrirScanner(datos){
   document.getElementById("hdrRol").textContent=datos.rol||"";
   iniciarScanner();
 }
-
 function iniciarScanner(){
   var st = document.getElementById("ftrStatus");
   st.textContent = "Iniciando camara...";
-
-  // Dar tiempo al DOM para renderizar el div antes de iniciar
   setTimeout(function() {
     html5QrcodeScanner = new Html5Qrcode("reader");
     Html5Qrcode.getCameras()
@@ -223,33 +204,21 @@ function iniciarScanner(){
       .catch(function(err){ st.textContent = "Error: " + err; });
   }, 500);
 }
-
-// Calcular estado segun hora local (sin llamar al servidor)
 function calcularEstadoLocal() {
   var ahora = new Date();
-  var h = ahora.getHours();
-  var m = ahora.getMinutes();
-  var totalMin = h * 60 + m;
-  
-  // Horarios RBR (deben coincidir con CONFIG del Sheets)
-  var puntuaDesde = 7 * 60 + 30;   // 07:30 - sistema abre
-  var puntualHasta = 8 * 60 + 10;  // 08:10 - puntual hasta
-  var tardeHasta = 11 * 60 + 15;   // 11:15 - tarde hasta (desde 11:16 = FALTA)
-
+  var totalMin = ahora.getHours() * 60 + ahora.getMinutes();
+  var puntuaDesde = 7 * 60 + 30;   // 07:30
+  var puntualHasta = 8 * 60 + 30;  // 08:30
+  var tardeHasta = 11 * 60 + 15;   // 11:15
   if (totalMin < puntuaDesde) return "FUERA_HORARIO";
   if (totalMin >= tardeHasta) return "FUERA_HORARIO";
   if (totalMin <= puntualHasta) return "PUNTUAL";
   return "TARDE";
 }
-
 function horaActualStr() {
   var d = new Date();
-  var h = String(d.getHours()).padStart(2,'0');
-  var m = String(d.getMinutes()).padStart(2,'0');
-  var s = String(d.getSeconds()).padStart(2,'0');
-  return h+":"+m+":"+s;
+  return String(d.getHours()).padStart(2,'0')+":"+String(d.getMinutes()).padStart(2,'0')+":"+String(d.getSeconds()).padStart(2,'0');
 }
-
 function onQRDetected(texto){
   if(PROCESANDO) return;
   var now = Date.now();
@@ -257,68 +226,39 @@ function onQRDetected(texto){
   ULTIMO_ID = texto;
   ULTIMO_TIME = now;
   PROCESANDO = true;
-
-  // Eliminar ceros a la izquierda (ej: 0001 → 1, 0124 → 124)
   texto = String(parseInt(texto, 10) || texto).trim();
-
-  // 1. Calcular estado LOCALMENTE - inmediato
   var estadoLocal = calcularEstadoLocal();
   var horaLocal = horaActualStr();
-
   if(!ONLINE) {
-    mostrarResultado({ok:false, tipo:"ERROR", mensaje:"Sin conexion"}, texto);
-    sndError();
-    PROCESANDO = false;
-    return;
+    mostrarResultado({ok:false,tipo:"ERROR",mensaje:"Sin conexion"}, texto);
+    sndError(); PROCESANDO=false; return;
   }
-
   if(estadoLocal === "FUERA_HORARIO") {
-    mostrarResultado({ok:false, tipo:"FUERA_HORARIO", mensaje:"Fuera del horario escolar"}, texto);
-    sndError();
-    return;
+    mostrarResultado({ok:false,tipo:"FUERA_HORARIO",mensaje:"Fuera del horario escolar"}, texto);
+    sndError(); return;
   }
-
-  // 2. Mostrar resultado INMEDIATAMENTE sin esperar servidor
-  mostrarResultado({
-    ok: true,
-    id: texto.trim(),
-    estado: estadoLocal,
-    hora: horaLocal,
-    tipo: "ENTRADA"
-  }, texto);
-
-  // Sonido inmediato
+  mostrarResultado({ok:true,id:texto,estado:estadoLocal,hora:horaLocal,tipo:"ENTRADA"}, texto);
   if(estadoLocal==="PUNTUAL") sndPuntual();
   else sndTarde();
-
-  // 3. Enviar al servidor EN SEGUNDO PLANO (no bloquea)
   enviarAlServidor(texto.trim(), horaLocal);
 }
-
 function enviarAlServidor(id, hora) {
-  console.log("Enviando al servidor ID:", id, "TOKEN:", TOKEN ? "OK" : "VACIO");
-  llamarServidor("escanear", {token: TOKEN, id: id})
+  llamarServidor("escanear", {token:TOKEN, id:id})
     .then(function(res) {
-      console.log("Respuesta servidor:", JSON.stringify(res));
       if (!res.ok && res.mensaje && res.mensaje.indexOf("Sesion") >= 0) {
-        var u = sessionStorage.getItem("qr_usuario");
-        var p = sessionStorage.getItem("qr_clave");
-        console.log("Re-login con usuario:", u);
-        return llamarServidor("login", {usuario: u, clave: p})
-          .then(function(lr) {
-            console.log("Re-login resultado:", lr.ok);
-            if (!lr.ok) return;
-            TOKEN = lr.token;
-            sessionStorage.setItem("qr_token", lr.token);
-            return llamarServidor("escanear", {token: TOKEN, id: id});
+        var u=sessionStorage.getItem("qr_usuario");
+        var p=sessionStorage.getItem("qr_clave");
+        return llamarServidor("login",{usuario:u,clave:p})
+          .then(function(lr){
+            if(!lr.ok) return;
+            TOKEN=lr.token;
+            sessionStorage.setItem("qr_token",lr.token);
+            return llamarServidor("escanear",{token:TOKEN,id:id});
           });
       }
     })
-    .catch(function(err) {
-      console.log("Error guardando en servidor:", err.message);
-    });
+    .catch(function(err){ console.log("Error servidor:", err.message); });
 }
-
 function mostrarResultado(res,id){
   var overlay=document.getElementById("resultOverlay");
   var card=document.getElementById("resultCard");
@@ -327,53 +267,42 @@ function mostrarResultado(res,id){
     var e=(res.estado||"").toUpperCase();
     document.getElementById("resEstado").textContent=e;
     document.getElementById("resId").textContent="ID: "+(res.id||id);
-    document.getElementById("resHora").textContent=res.hora||hora();
+    document.getElementById("resHora").textContent=res.hora||horaActualStr();
     document.getElementById("resTipo").textContent=res.tipo||"ENTRADA";
     document.getElementById("resMsg").textContent=res.duplicado?"Registro duplicado":"";
     card.classList.add(e==="PUNTUAL"?"puntual":e==="TARDE"?"tarde":"falta");
   } else {
-    var tipoError = (res.tipo === "FUERA_HORARIO") ? "FUERA DE HORARIO" : "ERROR";
-    document.getElementById("resEstado").textContent = tipoError;
-    document.getElementById("resId").textContent = "ID: "+(id||"---");
-    document.getElementById("resHora").textContent = hora();
-    document.getElementById("resTipo").textContent = res.tipo||"ERROR";
-    document.getElementById("resMsg").textContent = res.mensaje||"Error";
+    var tipoError=(res.tipo==="FUERA_HORARIO")?"FUERA DE HORARIO":"ERROR";
+    document.getElementById("resEstado").textContent=tipoError;
+    document.getElementById("resId").textContent="ID: "+(id||"---");
+    document.getElementById("resHora").textContent=horaActualStr();
+    document.getElementById("resTipo").textContent=res.tipo||"ERROR";
+    document.getElementById("resMsg").textContent=res.mensaje||"Error";
     card.classList.add("error");
   }
   overlay.classList.add("show");
   clearTimeout(TIMER_RES);
   TIMER_RES=setTimeout(function(){
     overlay.classList.remove("show");
-    PROCESANDO=false;
-    ULTIMO_ID=null;
+    PROCESANDO=false; ULTIMO_ID=null;
     document.getElementById("ftrStatus").textContent="Escaneando...";
   },2500);
 }
-
-function hora(){return new Date().toLocaleTimeString("es-PE",{hour12:false});}
-
 function rotarPantalla(){
-  var body = document.body;
-  var current = body.style.transform;
-  if(current === "rotate(90deg) translateY(-100%)") {
-    body.style.transform = "";
-    body.style.transformOrigin = "";
-    body.style.width = "";
-    body.style.height = "";
-    body.style.position = "";
+  var body=document.body;
+  if(body.style.transform==="rotate(90deg) translateY(-100%)"){
+    body.style.transform=""; body.style.transformOrigin="";
+    body.style.width=""; body.style.height=""; body.style.position="";
   } else {
-    body.style.transform = "rotate(90deg) translateY(-100%)";
-    body.style.transformOrigin = "top left";
-    body.style.width = "100vh";
-    body.style.height = "100vw";
-    body.style.position = "absolute";
+    body.style.transform="rotate(90deg) translateY(-100%)";
+    body.style.transformOrigin="top left";
+    body.style.width="100vh"; body.style.height="100vw"; body.style.position="absolute";
   }
 }
-
 function salir(){
   if(!confirm("Cerrar sesion?")) return;
-  sessionStorage.clear();TOKEN=null;
-  if(html5QrcodeScanner) { try { html5QrcodeScanner.stop(); } catch(e){} html5QrcodeScanner = null; }
+  sessionStorage.clear(); TOKEN=null;
+  if(html5QrcodeScanner){try{html5QrcodeScanner.stop();}catch(e){} html5QrcodeScanner=null;}
   document.getElementById("scannerScreen").style.display="none";
   document.getElementById("loginScreen").style.display="flex";
   document.getElementById("inpUsuario").value="";
