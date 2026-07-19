@@ -255,7 +255,7 @@
 <body>
 
 <header>
-  <img src="https://res.cloudinary.com/dwcirsunu/image/upload/f_auto,q_auto/LOGO_SACHABAMBA" alt="Logo I.E.P. Ricardo Bautista Rivera">
+  <img src="https://res.cloudinary.com/dwcirsunu/image/upload/v1777931349/LOGO_SACHABAMBA_gelfg0.jpg" alt="Logo I.E.P. Ricardo Bautista Rivera">
   <h1>I.E.P. RICARDO BAUTISTA RIVERA - SACHABAMBA</h1>
   <p>Consulta de asistencia para padres de familia</p>
 </header>
@@ -273,7 +273,7 @@
     <label for="campo-dni">DNI del estudiante</label>
     <input type="text" id="campo-dni" inputmode="numeric" placeholder="Ej: 80735254" autocomplete="off">
 
-    <label for="campo-desde">Ver desde (opcional)</label>
+    <label for="campo-desde">Rango de fechas (mes actual por defecto)</label>
     <div class="fila-fechas">
       <div>
         <input type="date" id="campo-desde">
@@ -342,6 +342,24 @@
 
   document.getElementById('boton-consultar').addEventListener('click', consultar);
   document.getElementById('boton-nueva-consulta').addEventListener('click', nuevaConsulta);
+
+  // Por defecto, la consulta abarca del 1° del mes actual hasta hoy.
+  // El padre puede ampliar el rango manualmente si quiere ver otros meses.
+  aplicarRangoMesActual();
+
+  function aplicarRangoMesActual() {
+    var hoy = new Date();
+    var primerDiaMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+    document.getElementById('campo-desde').value = aFechaISO(primerDiaMes);
+    document.getElementById('campo-hasta').value = aFechaISO(hoy);
+  }
+
+  function aFechaISO(fecha) {
+    var y = fecha.getFullYear();
+    var m = String(fecha.getMonth() + 1).padStart(2, '0');
+    var d = String(fecha.getDate()).padStart(2, '0');
+    return y + '-' + m + '-' + d;
+  }
 
   function mostrarError(msg) {
     elError.textContent = msg;
