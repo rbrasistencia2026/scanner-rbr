@@ -23,30 +23,22 @@
   body {
     margin: 0;
     font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-    background: var(--fondo);
     color: var(--texto);
     min-height: 100vh;
-  }
-
-  .hero-foto {
     background-image:
-      linear-gradient(180deg, rgba(15, 28, 41, 0.35), rgba(15, 28, 41, 0.75)),
+      linear-gradient(180deg, rgba(20, 34, 48, 0.80), rgba(20, 34, 48, 0.86)),
       url('fondo-colegio-rbr.jpg');
     background-size: cover;
-    background-position: center 65%;
+    background-position: center center;
     background-repeat: no-repeat;
-    height: 190px;
+    background-attachment: fixed;
   }
 
   header {
-    background: transparent;
+    background: linear-gradient(135deg, var(--azul-oscuro), var(--azul));
     color: white;
-    padding: 20px 20px 0;
+    padding: 28px 20px 24px;
     text-align: center;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
   }
 
   header img {
@@ -287,7 +279,7 @@
   .pie {
     text-align: center;
     font-size: 0.72rem;
-    color: var(--texto-suave);
+    color: rgba(255, 255, 255, 0.75);
     margin-top: 26px;
   }
 
@@ -301,13 +293,11 @@
 </head>
 <body>
 
-<div class="hero-foto">
 <header>
   <img src="https://res.cloudinary.com/dwcirsunu/image/upload/v1777931349/LOGO_SACHABAMBA_gelfg0.jpg" alt="Logo I.E.P. Ricardo Bautista Rivera">
   <h1>I.E.P. RICARDO BAUTISTA RIVERA - SACHABAMBA</h1>
   <p>Consulta de asistencia para padres de familia</p>
 </header>
-</div>
 
 <main>
 
