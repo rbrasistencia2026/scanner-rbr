@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Consulta de Asistencia — I.E.P. Ricardo Bautista Rivera</title>
+<style>
+  :root {
+    --azul-oscuro: #1B3A5C;
+    --azul: #2D5F8A;
+    --verde: #3E8E5A;
+    --ambar: #C9862E;
+    --rojo: #B23A3A;
+    --fondo: #F3F5F7;
+    --tarjeta: #FFFFFF;
+    --texto: #1C2733;
+    --texto-suave: #5A6B7A;
+    --borde: #DCE3E8;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background: var(--fondo);
+    color: var(--texto);
+    min-height: 100vh;
+  }
+
+  header {
+    background: linear-gradient(135deg, var(--azul-oscuro), var(--azul));
+    color: white;
+    padding: 28px 20px 24px;
+    text-align: center;
+  }
+
+  header img {
+    width: 68px;
+    height: 68px;
+    border-radius: 10px;
+    object-fit: cover;
+    margin-bottom: 10px;
+    background: white;
+    padding: 4px;
+  }
+
+  header h1 {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+  }
+
+  header p {
+    margin: 6px 0 0;
+    font-size: 0.85rem;
+    opacity: 0.85;
+  }
+
+  main {
+    max-width: 480px;
+    margin: -18px auto 40px;
+    padding: 0 16px;
+  }
+
+  .tarjeta {
+    background: var(--tarjeta);
+    border-radius: 14px;
+    box-shadow: 0 6px 20px rgba(27, 58, 92, 0.12);
+    padding: 22px 20px;
+    margin-top: 18px;
+  }
+
+  .tarjeta h2 {
+    font-size: 1rem;
+    margin: 0 0 4px;
+    color: var(--azul-oscuro);
+  }
+
+  .tarjeta .subtitulo {
+    font-size: 0.85rem;
+    color: var(--texto-suave);
+    margin: 0 0 18px;
+  }
+
+  label {
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--texto-suave);
+    margin: 14px 0 6px;
+  }
+
+  input[type="text"], input[type="date"] {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1.5px solid var(--borde);
+    border-radius: 9px;
+    font-size: 1rem;
+    color: var(--texto);
+    background: #FAFBFC;
+  }
+
+  input:focus {
+    outline: none;
+    border-color: var(--azul);
+    background: white;
+  }
+
+  .fila-fechas {
+    display: flex;
+    gap: 10px;
+  }
+
+  .fila-fechas > div {
+    flex: 1;
+  }
+
+  button {
+    width: 100%;
+    margin-top: 20px;
+    padding: 13px;
+    border: none;
+    border-radius: 9px;
+    background: var(--azul-oscuro);
+    color: white;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+
+  button:active { background: var(--azul); }
+  button:disabled { background: #9AAAB8; cursor: default; }
+
+  button.secundario {
+    background: transparent;
+    color: var(--azul);
+    border: 1.5px solid var(--azul);
+    margin-top: 10px;
+  }
+
+  .mensaje-error {
+    background: #FDECEC;
+    border: 1px solid #F3C6C6;
+    color: var(--rojo);
+    padding: 12px 14px;
+    border-radius: 9px;
+    font-size: 0.88rem;
+    margin-top: 16px;
+    display: none;
+  }
+
+  .estudiante-nombre {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--azul-oscuro);
+  }
+
+  .estudiante-detalle {
+    font-size: 0.85rem;
+    color: var(--texto-suave);
+    margin-top: 2px;
+  }
+
+  .resumen {
+    display: flex;
+    gap: 10px;
+    margin: 18px 0 4px;
+  }
+
+  .resumen-item {
+    flex: 1;
+    text-align: center;
+    padding: 12px 4px;
+    border-radius: 10px;
+    background: #F5F7F9;
+  }
+
+  .resumen-item .numero {
+    font-size: 1.4rem;
+    font-weight: 700;
+  }
+
+  .resumen-item .etiqueta {
+    font-size: 0.7rem;
+    color: var(--texto-suave);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+
+  .resumen-item.puntual .numero { color: var(--verde); }
+  .resumen-item.tarde .numero { color: var(--ambar); }
+  .resumen-item.falta .numero { color: var(--rojo); }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 16px;
+    font-size: 0.85rem;
+  }
+
+  th {
+    text-align: left;
+    color: var(--texto-suave);
+    font-weight: 600;
+    padding: 8px 6px;
+    border-bottom: 2px solid var(--borde);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+  }
+
+  td {
+    padding: 9px 6px;
+    border-bottom: 1px solid var(--borde);
+  }
+
+  .etiqueta-estado {
+    display: inline-block;
+    padding: 3px 9px;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 700;
+  }
+
+  .etiqueta-estado.PUNTUAL { background: #E4F3E9; color: var(--verde); }
+  .etiqueta-estado.TARDE { background: #FBEEDD; color: var(--ambar); }
+  .etiqueta-estado.FALTA { background: #FBE6E6; color: var(--rojo); }
+
+  .oculto { display: none; }
+
+  .cargando {
+    text-align: center;
+    padding: 30px 0;
+    color: var(--texto-suave);
+    font-size: 0.9rem;
+  }
+
+  .pie {
+    text-align: center;
+    font-size: 0.72rem;
+    color: var(--texto-suave);
+    margin-top: 26px;
+  }
+
+  .sin-registros {
+    text-align: center;
+    padding: 20px 0;
+    color: var(--texto-suave);
+    font-size: 0.88rem;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <img src="https://res.cloudinary.com/dwcirsunu/image/upload/f_auto,q_auto/LOGO_SACHABAMBA" alt="Logo I.E.P. Ricardo Bautista Rivera">
+  <h1>I.E.P. RICARDO BAUTISTA RIVERA - SACHABAMBA</h1>
+  <p>Consulta de asistencia para padres de familia</p>
+</header>
+
+<main>
+
+  <!-- ===================== FORMULARIO DE BÚSQUEDA ===================== -->
+  <div class="tarjeta" id="tarjeta-form">
+    <h2>Consultar asistencia</h2>
+    <p class="subtitulo">Ingrese el ID y el DNI del estudiante para ver su asistencia.</p>
+
+    <label for="campo-id">ID del estudiante</label>
+    <input type="text" id="campo-id" inputmode="numeric" placeholder="Ej: 24" autocomplete="off">
+
+    <label for="campo-dni">DNI del estudiante</label>
+    <input type="text" id="campo-dni" inputmode="numeric" placeholder="Ej: 80735254" autocomplete="off">
+
+    <label for="campo-desde">Ver desde (opcional)</label>
+    <div class="fila-fechas">
+      <div>
+        <input type="date" id="campo-desde">
+      </div>
+      <div>
+        <input type="date" id="campo-hasta">
+      </div>
+    </div>
+
+    <button id="boton-consultar">Consultar</button>
+
+    <div class="mensaje-error" id="caja-error"></div>
+  </div>
+
+  <!-- ===================== CARGANDO ===================== -->
+  <div class="tarjeta oculto" id="tarjeta-cargando">
+    <div class="cargando">Buscando información…</div>
+  </div>
+
+  <!-- ===================== RESULTADO ===================== -->
+  <div class="tarjeta oculto" id="tarjeta-resultado">
+    <div class="estudiante-nombre" id="res-nombre"></div>
+    <div class="estudiante-detalle" id="res-detalle"></div>
+
+    <div class="resumen">
+      <div class="resumen-item puntual">
+        <div class="numero" id="res-puntual">0</div>
+        <div class="etiqueta">Puntual</div>
+      </div>
+      <div class="resumen-item tarde">
+        <div class="numero" id="res-tarde">0</div>
+        <div class="etiqueta">Tarde</div>
+      </div>
+      <div class="resumen-item falta">
+        <div class="numero" id="res-falta">0</div>
+        <div class="etiqueta">Falta</div>
+      </div>
+    </div>
+
+    <div id="contenedor-tabla">
+      <table id="tabla-registros">
+        <thead>
+          <tr><th>Fecha</th><th>Hora</th><th>Estado</th></tr>
+        </thead>
+        <tbody id="cuerpo-tabla"></tbody>
+      </table>
+      <div class="sin-registros oculto" id="sin-registros">No hay registros en el periodo seleccionado.</div>
+    </div>
+
+    <button class="secundario" id="boton-nueva-consulta">Nueva consulta</button>
+  </div>
+
+  <div class="pie">JECKAM Academy — Sistema de Asistencia QR</div>
+
+</main>
+
+<script>
+  // ⚠️ Reemplazar con la URL del NUEVO despliegue de APP3_Padres_RBR.gs
+  // (proyecto de Apps Script independiente, no el de APP1/APP2)
+  var WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxTgxyikbAJhLVSq3E2GTV6GO90zzxKJodG3bQEXrO5RbA6JFwoiXUeks68nquEbu1B/exec";
+
+  var elForm = document.getElementById('tarjeta-form');
+  var elCargando = document.getElementById('tarjeta-cargando');
+  var elResultado = document.getElementById('tarjeta-resultado');
+  var elError = document.getElementById('caja-error');
+
+  document.getElementById('boton-consultar').addEventListener('click', consultar);
+  document.getElementById('boton-nueva-consulta').addEventListener('click', nuevaConsulta);
+
+  function mostrarError(msg) {
+    elError.textContent = msg;
+    elError.style.display = 'block';
+  }
+
+  function ocultarError() {
+    elError.style.display = 'none';
+  }
+
+  function consultar() {
+    var id = document.getElementById('campo-id').value.trim();
+    var dni = document.getElementById('campo-dni').value.trim();
+    var desde = document.getElementById('campo-desde').value;
+    var hasta = document.getElementById('campo-hasta').value;
+
+    ocultarError();
+
+    if (!id || !dni) {
+      mostrarError('Por favor ingrese el ID y el DNI del estudiante.');
+      return;
+    }
+
+    elForm.classList.add('oculto');
+    elCargando.classList.remove('oculto');
+
+    fetch(WEBAPP_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({
+        action: 'consultarPadre',
+        params: { id: id, dni: dni, fechaInicio: desde, fechaFin: hasta }
+      })
+    })
+    .then(function (resp) { return resp.json(); })
+    .then(function (data) {
+      elCargando.classList.add('oculto');
+
+      if (!data.ok) {
+        elForm.classList.remove('oculto');
+        mostrarError(data.error || 'No se pudo completar la consulta.');
+        return;
+      }
+
+      mostrarResultado(data);
+    })
+    .catch(function () {
+      elCargando.classList.add('oculto');
+      elForm.classList.remove('oculto');
+      mostrarError('No se pudo conectar con el servidor. Intente nuevamente.');
+    });
+  }
+
+  function mostrarResultado(data) {
+    document.getElementById('res-nombre').textContent = data.estudiante.nombres;
+    document.getElementById('res-detalle').textContent =
+      data.estudiante.grado + ' "' + data.estudiante.seccion + '"  ·  DNI: ' + data.estudiante.dni;
+
+    document.getElementById('res-puntual').textContent = data.resumen.PUNTUAL || 0;
+    document.getElementById('res-tarde').textContent = data.resumen.TARDE || 0;
+    document.getElementById('res-falta').textContent = data.resumen.FALTA || 0;
+
+    var cuerpo = document.getElementById('cuerpo-tabla');
+    cuerpo.innerHTML = '';
+
+    if (!data.registros || data.registros.length === 0) {
+      document.getElementById('tabla-registros').classList.add('oculto');
+      document.getElementById('sin-registros').classList.remove('oculto');
+    } else {
+      document.getElementById('tabla-registros').classList.remove('oculto');
+      document.getElementById('sin-registros').classList.add('oculto');
+
+      // Más recientes primero
+      var registrosOrdenados = data.registros.slice().reverse();
+
+      registrosOrdenados.forEach(function (r) {
+        var fila = document.createElement('tr');
+        fila.innerHTML =
+          '<td>' + formatearFecha(r.fecha) + '</td>' +
+          '<td>' + (r.hora || '---') + '</td>' +
+          '<td><span class="etiqueta-estado ' + r.estado + '">' + r.estado + '</span></td>';
+        cuerpo.appendChild(fila);
+      });
+    }
+
+    elResultado.classList.remove('oculto');
+  }
+
+  function formatearFecha(fechaISO) {
+    var partes = fechaISO.split('-');
+    return partes[2] + '/' + partes[1] + '/' + partes[0];
+  }
+
+  function nuevaConsulta() {
+    document.getElementById('campo-id').value = '';
+    document.getElementById('campo-dni').value = '';
+    document.getElementById('campo-desde').value = '';
+    document.getElementById('campo-hasta').value = '';
+    ocultarError();
+    elResultado.classList.add('oculto');
+    elForm.classList.remove('oculto');
+  }
+</script>
+
+</body>
+</html>
