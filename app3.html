@@ -23,13 +23,19 @@
   body {
     margin: 0;
     font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-    background: var(--fondo);
     color: var(--texto);
     min-height: 100vh;
+    background-image:
+      linear-gradient(180deg, rgba(15, 28, 41, 0.72), rgba(15, 28, 41, 0.55) 40%, var(--fondo) 320px),
+      url('fondo-colegio-rbr.jpg');
+    background-size: cover;
+    background-position: center top;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
   }
 
   header {
-    background: linear-gradient(135deg, var(--azul-oscuro), var(--azul));
+    background: linear-gradient(135deg, rgba(27, 58, 92, 0.82), rgba(45, 95, 138, 0.78));
     color: white;
     padding: 28px 20px 24px;
     text-align: center;
@@ -111,6 +117,39 @@
   .fila-fechas {
     display: flex;
     gap: 10px;
+    margin-top: 12px;
+  }
+
+  .opciones-rango {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .opcion-radio {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 13px;
+    border: 1.5px solid var(--borde);
+    border-radius: 9px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--texto);
+    cursor: pointer;
+    background: #FAFBFC;
+  }
+
+  .opcion-radio input[type="radio"] {
+    width: 17px;
+    height: 17px;
+    accent-color: var(--azul-oscuro);
+    margin: 0;
+  }
+
+  .opcion-radio:has(input:checked) {
+    border-color: var(--azul);
+    background: #EEF4FA;
   }
 
   .fila-fechas > div {
@@ -273,12 +312,25 @@
     <label for="campo-dni">DNI del estudiante</label>
     <input type="text" id="campo-dni" inputmode="numeric" placeholder="Ej: 80735254" autocomplete="off">
 
-    <label for="campo-desde">Rango de fechas (mes actual por defecto)</label>
-    <div class="fila-fechas">
+    <label>¿Qué periodo desea consultar?</label>
+    <div class="opciones-rango">
+      <label class="opcion-radio">
+        <input type="radio" name="tipo-rango" value="mes" id="radio-mes" checked>
+        <span>Asistencia del mes actual</span>
+      </label>
+      <label class="opcion-radio">
+        <input type="radio" name="tipo-rango" value="otro" id="radio-otro">
+        <span>Otro rango de fechas</span>
+      </label>
+    </div>
+
+    <div class="fila-fechas oculto" id="bloque-fechas">
       <div>
+        <label for="campo-desde">Desde</label>
         <input type="date" id="campo-desde">
       </div>
       <div>
+        <label for="campo-hasta">Hasta</label>
         <input type="date" id="campo-hasta">
       </div>
     </div>
@@ -343,15 +395,13 @@
   document.getElementById('boton-consultar').addEventListener('click', consultar);
   document.getElementById('boton-nueva-consulta').addEventListener('click', nuevaConsulta);
 
-  // Por defecto, la consulta abarca del 1° del mes actual hasta hoy.
-  // El padre puede ampliar el rango manualmente si quiere ver otros meses.
-  aplicarRangoMesActual();
+  var elBloqueFechas = document.getElementById('bloque-fechas');
+  document.getElementById('radio-mes').addEventListener('change', actualizarVisibilidadFechas);
+  document.getElementById('radio-otro').addEventListener('change', actualizarVisibilidadFechas);
 
-  function aplicarRangoMesActual() {
-    var hoy = new Date();
-    var primerDiaMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
-    document.getElementById('campo-desde').value = aFechaISO(primerDiaMes);
-    document.getElementById('campo-hasta').value = aFechaISO(hoy);
+  function actualizarVisibilidadFechas() {
+    var esOtroRango = document.getElementById('radio-otro').checked;
+    elBloqueFechas.classList.toggle('oculto', !esOtroRango);
   }
 
   function aFechaISO(fecha) {
@@ -359,6 +409,12 @@
     var m = String(fecha.getMonth() + 1).padStart(2, '0');
     var d = String(fecha.getDate()).padStart(2, '0');
     return y + '-' + m + '-' + d;
+  }
+
+  function obtenerRangoMesActual() {
+    var hoy = new Date();
+    var primerDiaMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+    return { desde: aFechaISO(primerDiaMes), hasta: aFechaISO(hoy) };
   }
 
   function mostrarError(msg) {
@@ -373,13 +429,26 @@
   function consultar() {
     var id = document.getElementById('campo-id').value.trim();
     var dni = document.getElementById('campo-dni').value.trim();
-    var desde = document.getElementById('campo-desde').value;
-    var hasta = document.getElementById('campo-hasta').value;
+
+    var rango;
+    if (document.getElementById('radio-mes').checked) {
+      rango = obtenerRangoMesActual();
+    } else {
+      rango = {
+        desde: document.getElementById('campo-desde').value,
+        hasta: document.getElementById('campo-hasta').value
+      };
+    }
 
     ocultarError();
 
     if (!id || !dni) {
       mostrarError('Por favor ingrese el ID y el DNI del estudiante.');
+      return;
+    }
+
+    if (document.getElementById('radio-otro').checked && (!rango.desde || !rango.hasta)) {
+      mostrarError('Seleccione ambas fechas del rango a consultar.');
       return;
     }
 
@@ -391,7 +460,7 @@
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({
         action: 'consultarPadre',
-        params: { id: id, dni: dni, fechaInicio: desde, fechaFin: hasta }
+        params: { id: id, dni: dni, fechaInicio: rango.desde, fechaFin: rango.hasta }
       })
     })
     .then(function (resp) { return resp.json(); })
@@ -458,6 +527,8 @@
     document.getElementById('campo-dni').value = '';
     document.getElementById('campo-desde').value = '';
     document.getElementById('campo-hasta').value = '';
+    document.getElementById('radio-mes').checked = true;
+    actualizarVisibilidadFechas();
     ocultarError();
     elResultado.classList.add('oculto');
     elForm.classList.remove('oculto');
